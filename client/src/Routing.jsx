@@ -6,14 +6,14 @@ import Drawings from './components/Drawing';   // Drawings component
 import DrawingMap from './components/DrawingMap';  // DrawingMap component
 import LocationTester from './components/LocationTester';
 import LocationTracker from './components/LocationTracker';
-// import ErrorPage from './components/ErrorPage';  // Optional: Error page component
+import ErrorPage from './endpoints/ErrorPage';  // Optional: Error page component
 
 // Create the router using React Router v6
 const router = createBrowserRouter([
   {
     path: '/',                   // Base path
     element: <App />,            // The App component renders common layout (like Navbar)
-    // errorElement: <ErrorPage />,  // Optional: Custom error page
+    errorElement: <ErrorPage />,  // Optional: Custom error page
     children: [
       {
         index: true,             // Default route (homepage)
