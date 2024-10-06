@@ -10,33 +10,46 @@ const userSchema = new Schema({
         type: String,
         required: [true, 'Last name is required'],
     },
+    userName: {
+        type: String,
+        required: [true, 'User name is required'],
+        unique: true,
+    },
     password: {
         type: String,
         required: true,
         minlength: [4, 'Password must be at least 4 characters'],
-        maxlength: 24,
     },
-      // Timestamps for tracking when the user account was created and updated
-    createdAt: {
+    locations: [{
+      lat: Number,
+      lng: Number,
+      timestamp: { 
         type: Date,
-        default: Date.now
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now
-    }
+        default: Date.now,
+      },
+      notes: {
+        type: String,
+        required: false,
+      },
+    }]
 });
 
 
 // Set up pre-save middleware to create password
 userSchema.pre('save', async function (next) {
-    if (this.isNew || this.isModified('password')) {
+  if (this.isModified('password') || this.isNew) {
+    try {
       const saltRounds = 10;
       this.password = await bcrypt.hash(this.password, saltRounds);
+      console.log('Hashed password in pre-save hook:', this.password);  // Log the hashed password
+      next();
+    } catch (err) {
+      return next(err);
     }
-  
+  } else {
     next();
-  });
+  }
+});
   
   // Compare the incoming password with the hashed password
   userSchema.methods.isCorrectPassword = async function (password) {

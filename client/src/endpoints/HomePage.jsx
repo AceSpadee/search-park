@@ -13,15 +13,6 @@ const HomePage = () => {
         <Link to="/map" className='button'>
           Start Drawing
         </Link>
-        <Link to="/drawings" className='button'>
-          View Saved Drawings
-        </Link>
-        <Link to="/Ltest" className='button'>
-          View testing draw
-        </Link>
-        <Link to="/Ltracker" className='button'>
-          View testing tracker
-        </Link>
       </div>
     </div>
   );
