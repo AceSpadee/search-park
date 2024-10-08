@@ -19,8 +19,8 @@ const Navbar = () => {
     </ul>
   </div>
   <div className="navbar-center">
-    <a href="/" className="logo">
-      ShopNow
+    <a href="/location" className="logo">
+      locations
     </a>
   </div>
   <div className="navbar-right">

@@ -29,17 +29,20 @@ const saveLocation = async (req, res) => {
 // Controller to get all locations for the authenticated user
 const getLocations = async (req, res) => {
   try {
-    // Find the user by the ID in the decoded JWT token
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Return the user's stored locations
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Respond with the user's stored locations
     res.status(200).json(user.locations);
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching locations:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 // Export the controller functions so they can be used in routes
 module.exports = {
