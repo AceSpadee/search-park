@@ -6,6 +6,7 @@ import DrawingMap from './components/DrawingMap';  // DrawingMap component
 import ErrorPage from './endpoints/ErrorPage';  // Optional: Error page component
 import Login from './endpoints/Login';
 import Register from './endpoints/Register';
+import LocationApp from './endpoints/Location';
 
 // Create the router using React Router v6
 const router = createBrowserRouter([
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
       {
         path: 'register',
         element: <Register />,
+      },
+      {
+        path: 'location',
+        element: <LocationApp />,
       },
     ],
   },

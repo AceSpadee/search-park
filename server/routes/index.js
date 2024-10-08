@@ -8,8 +8,8 @@ const locationRoutes = require('./api/location');
 const userRoutes = require('./api/users');
 
 // Use the routes
-router.use('/auth', authRoutes);        // Maps to /api/auth/*
-router.use('/location', locationRoutes);  // Maps to /api/location/*
-router.use('/users', userRoutes);  // All user-related routes (e.g., profile) are under /api/users
+router.use('/auth', authRoutes);
+router.use('/location', locationRoutes);
+router.use('/users', userRoutes);
 
 module.exports = router;

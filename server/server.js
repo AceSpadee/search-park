@@ -1,15 +1,15 @@
 // server.js
 require('dotenv').config();
 const express = require('express');
-const connectDB = require('./config/connection');  // Import the connection function
+const connectDB = require('./config/connection');
 const cors = require('cors');
 const app = express();
-const apiRoutes = require('./routes');  // Import routes/index.js
+const apiRoutes = require('./routes');
 
 // Connect to MongoDB
-connectDB();  // Call the function to connect
+connectDB();
 
-// Serve static files (if needed)
+// Serve static files (if needed).
 app.use(express.static('public'));
 
 // Middleware

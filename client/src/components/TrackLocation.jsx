@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const TrackLocation = () => {
+const TrackLocation = ({ addLocation }) => {
   const [location, setLocation] = useState(null);
+  const [note, setNote] = useState(''); // State to track the user's note input
 
   // Function to capture and send location to the backend
   const trackLocation = () => {
@@ -12,18 +13,24 @@ const TrackLocation = () => {
         const locationData = {
           lat: latitude,
           lng: longitude,
-          timestamp: new Date(),  // You can send a custom timestamp or let the backend handle it
-          notes: 'Visited this location',  // Optional notes
+          timestamp: new Date(),
+          notes: note || '',  // Use the user's note or an empty string if no note is provided
         };
 
         try {
-          // Send the location to the backend
+          const token = localStorage.getItem('token'); // Get JWT token from localStorage
+          if (!token) {
+            console.error('User not logged in');
+            return;
+          }
+          
           const response = await axios.post('/api/location', locationData, {
             headers: {
-              Authorization: `Bearer ${yourJWTToken}`,  // Send the JWT token if needed
+              'x-auth-token': token,  // Send the token in the request header
             },
           });
-          setLocation(locationData);  // Update state with the captured location
+          setLocation(locationData);
+          addLocation(locationData);  // Update the map with the new location
           console.log('Location saved:', response.data);
         } catch (error) {
           console.error('Error saving location:', error);
@@ -36,6 +43,11 @@ const TrackLocation = () => {
 
   return (
     <div>
+      <textarea 
+        placeholder="Enter a note (optional)" 
+        value={note} 
+        onChange={(e) => setNote(e.target.value)} 
+      />
       <button onClick={trackLocation}>Track My Location</button>
       {location && <p>Location saved: {location.lat}, {location.lng}</p>}
     </div>
