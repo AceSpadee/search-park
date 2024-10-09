@@ -7,6 +7,10 @@ const LocationApp = () => {
   const [locations, setLocations] = useState([]);  // Store user's locations
   const [error, setError] = useState(null);  // Track any errors
 
+  // Use the deployed backend URL from environment variables
+  const apiUrl = import.meta.env.VITE_BACKEND_URL;  // For Vite
+  // const apiUrl = process.env.REACT_APP_BACKEND_URL;  // For Create React App
+
   // Function to fetch saved locations from the server
   const fetchLocations = async () => {
     try {
@@ -16,7 +20,7 @@ const LocationApp = () => {
         return;
       }
 
-      const response = await axios.get('/api/location', {
+      const response = await axios.get(`${apiUrl}/api/location`, {
         headers: {
           'x-auth-token': token,  // Send the JWT token in the request header
         },
@@ -24,7 +28,20 @@ const LocationApp = () => {
 
       setLocations(response.data);  // Update the state with fetched locations
     } catch (error) {
-      setError('Failed to load locations. Please try again.');
+      // Handle specific Axios errors
+      if (error.response) {
+        if (error.response.status === 401) {
+          setError('Authentication failed. Please log in again.');
+        } else if (error.response.status === 500) {
+          setError('Server error occurred. Please try again later.');
+        } else {
+          setError(`Failed to load locations: ${error.response.data.message || 'Unknown error'}`);
+        }
+      } else if (error.request) {
+        setError('No response from server. Please check your internet connection.');
+      } else {
+        setError(`Unexpected error: ${error.message}`);
+      }
       console.error('Error fetching locations:', error);
     }
   };
@@ -37,11 +54,12 @@ const LocationApp = () => {
   // Fetch locations when the component mounts
   useEffect(() => {
     fetchLocations();
-  }, []);
+  }, []);  // Only run on initial render
 
   return (
     <div>
       <h1>Track My Location</h1>
+
       {/* Pass the addLocation function to TrackLocation so it can update the map */}
       <TrackLocation addLocation={addLocation} />
 

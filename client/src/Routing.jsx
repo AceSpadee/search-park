@@ -2,7 +2,7 @@ import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';        // Main App component
 import HomePage from './endpoints/HomePage';  // HomePage endpoints
-import DrawingMap from './components/DrawingMap';  // DrawingMap component
+// import DrawingMap from './components/DrawingMap';  // DrawingMap component
 import ErrorPage from './endpoints/ErrorPage';  // Optional: Error page component
 import Login from './endpoints/Login';
 import Register from './endpoints/Register';
@@ -19,10 +19,10 @@ const router = createBrowserRouter([
         index: true,             // Default route (homepage)
         element: <HomePage />,
       },
-      {
-        path: 'map',             // Path for the drawing/map component
-        element: <DrawingMap />,
-      },
+      // {
+      //   path: 'map',             // Path for the drawing/map component
+      //   element: <DrawingMap />,
+      // },
       {
         path: 'login',
         element: <Login />,

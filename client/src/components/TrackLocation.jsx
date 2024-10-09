@@ -6,6 +6,10 @@ const TrackLocation = ({ addLocation }) => {
   const [note, setNote] = useState('');  // State to track the user's note input
   const [error, setError] = useState(null);  // State to track errors
 
+  // Use the deployed backend URL from environment variables
+  const apiUrl = import.meta.env.VITE_BACKEND_URL;  // For Vite
+  // const apiUrl = process.env.REACT_APP_BACKEND_URL;  // For Create React App
+
   // Function to capture and send location to the backend
   const trackLocation = () => {
     setError(null);  // Clear any previous error when attempting to track location
@@ -27,8 +31,8 @@ const TrackLocation = ({ addLocation }) => {
             return;
           }
 
-          // Send the location to the backend with the token
-          const response = await axios.post('/api/location', locationData, {
+          // Send the location to the deployed backend with the token
+          const response = await axios.post(`${apiUrl}/api/location`, locationData, {
             headers: {
               'x-auth-token': token,  // Send the JWT token in the request header
             },

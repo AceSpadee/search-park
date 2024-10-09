@@ -8,11 +8,15 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
 
+  // Use the deployed backend URL from environment variables
+  const apiUrl = import.meta.env.VITE_BACKEND_URL;  // For Vite
+  // const apiUrl = process.env.REACT_APP_BACKEND_URL;  // For Create React App
+
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
       // Make the API request to register the user
-      const response = await axios.post('/api/auth/register', {
+      const response = await axios.post(`${apiUrl}/api/auth/register`, {
         firstName,
         lastName,
         userName,
@@ -27,8 +31,21 @@ const Register = () => {
         setMessage('Unexpected response from the server.');
       }
     } catch (error) {
+      // Handle specific Axios errors
+      if (error.response) {
+        if (error.response.status === 400) {
+          setMessage('User already exists or invalid data.');
+        } else if (error.response.status === 500) {
+          setMessage('Server error occurred. Please try again later.');
+        } else {
+          setMessage(`Error registering user: ${error.response.data.message || 'Unknown error'}`);
+        }
+      } else if (error.request) {
+        setMessage('No response from server. Please check your internet connection.');
+      } else {
+        setMessage(`Unexpected error: ${error.message}`);
+      }
       console.error('Error registering user:', error);
-      setMessage('Error registering user. Please try again.');
     }
   };
 
