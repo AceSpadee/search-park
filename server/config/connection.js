@@ -3,7 +3,7 @@ const mongoURL = process.env.MONGODB_URI;
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(mongoURL || 'mongodb://127.0.0.1:27017/searchParks');
+    await mongoose.connect(mongoURL);
     console.log('MongoDB connected');
   } catch (err) {
     console.error('MongoDB connection error:', err.message);
