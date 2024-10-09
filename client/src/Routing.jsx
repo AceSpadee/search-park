@@ -19,10 +19,10 @@ const router = createBrowserRouter([
         index: true,             // Default route (homepage)
         element: <HomePage />,
       },
-      // {
-      //   path: 'map',             // Path for the drawing/map component
-      //   element: <DrawingMap />,
-      // },
+      {
+        path: 'map',             // Path for the drawing/map component
+        element: <DrawingMap />,
+      },
       {
         path: 'login',
         element: <Login />,

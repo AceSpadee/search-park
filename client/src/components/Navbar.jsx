@@ -19,9 +19,9 @@ const Navbar = () => {
     </ul>
   </div>
   <div className="navbar-center">
-    {/* <a href="/location" className="logo">
+    <a href="/location" className="logo">
       locations
-    </a> */}
+    </a>
   </div>
   <div className="navbar-right">
     <a href="/" className="home-button">
