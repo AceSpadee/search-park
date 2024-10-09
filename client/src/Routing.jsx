@@ -2,7 +2,7 @@ import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';        // Main App component
 import HomePage from './endpoints/HomePage';  // HomePage endpoints
-// import DrawingMap from './components/DrawingMap';  // DrawingMap component
+import DrawingMap from './components/DrawingMap';  // DrawingMap component
 import ErrorPage from './endpoints/ErrorPage';  // Optional: Error page component
 import Login from './endpoints/Login';
 import Register from './endpoints/Register';
