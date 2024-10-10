@@ -11,6 +11,7 @@ const Register = () => {
   // Use the deployed backend URL from environment variables
   const apiUrl = import.meta.env.VITE_BACKEND_URL;  // For Vite
   // const apiUrl = process.env.REACT_APP_BACKEND_URL;  // For Create React App
+  console.log('API URL:', apiUrl); 
 
   const handleRegister = async (e) => {
     e.preventDefault();
