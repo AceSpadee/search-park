@@ -2,35 +2,33 @@ const User = require('../models/User'); // Import User model
 const Location = require('../models/Location'); // Import Location model
 
 // Controller to save a new location for the user
+// Controller to save a new location for the user
 const saveLocation = async (req, res) => {
   try {
-    console.log('req.user:', req.user);  // Log the user attached to the request
-    const user = await User.findById(req.user.id);  // Ensure user ID exists
-    
+    // Find the user by ID
+    const user = await User.findById(req.user.id);
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Create a new Location document
-    const newLocation = new Location({
+    // Concatenate first and last name to create full name
+    const userFullName = `${user.firstName} ${user.lastName}`;
+
+    // Create and save the new location with user's full name
+    const location = new Location({
       lat: req.body.lat,
       lng: req.body.lng,
       timestamp: req.body.timestamp || new Date(),
       notes: req.body.notes || '',
-      user: user._id,  // Link the location to the user
+      userFullName: userFullName,  // Store the full name in the location
     });
 
-    // Save the location to the database
-    const savedLocation = await newLocation.save();
-
-    // Push the new location's ID into the user's locations array
-    user.locations.push(savedLocation._id);
-    await user.save();  // Save the updated user document
-
-    res.status(200).json({ msg: 'Location saved successfully', location: savedLocation });
-  } catch (err) {
-    console.error('Error saving location:', err);
-    res.status(500).json({ msg: 'Server error' });
+    await location.save();
+    res.status(201).json({ message: 'Location saved successfully', location });
+  } catch (error) {
+    console.error('Error saving location:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 

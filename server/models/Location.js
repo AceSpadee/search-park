@@ -11,9 +11,9 @@ const locationSchema = new Schema({
     type: String,
     required: false,
   },
-  user: {
-    type: Schema.Types.ObjectId, // Reference to the user
-    ref: 'User',
+  // Store user's full name directly
+  userFullName: {
+    type: String,
     required: true,
   },
 });
