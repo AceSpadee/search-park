@@ -3,6 +3,22 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+
+// Fix the broken marker icon issue
+let DefaultIcon = L.icon({
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41], // Size of the icon
+  iconAnchor: [12, 41], // Point of the icon which will correspond to marker's location
+  popupAnchor: [1, -34], // Point from which the popup should open relative to the iconAnchor
+  shadowSize: [41, 41], // Size of the shadow
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
 const MapComponent = () => {
   const [markers, setMarkers] = useState([]);  // Initialize markers as an empty array
   const [error, setError] = useState(null);  // State to track errors
@@ -11,6 +27,7 @@ const MapComponent = () => {
   const apiUrl = import.meta.env.VITE_BACKEND_URL;  // For Vite
   // const apiUrl = process.env.REACT_APP_BACKEND_URL;  // For Create React App
 
+  
   // Fetch locations from the backend when the component loads
   useEffect(() => {
     const fetchLocations = async () => {
