@@ -8,9 +8,11 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
 
-  // Use the deployed backend URL from environment variables
-  const apiUrl = import.meta.env.VITE_BACKEND_URL;  // For Vite
-  // const apiUrl = process.env.REACT_APP_BACKEND_URL;  // For Create React App
+  // Dynamically determine the backend URL based on environment
+  const isProduction = import.meta.env.MODE === 'production';
+  const apiUrl = isProduction 
+    ? import.meta.env.VITE_PROD_BACKEND_URL 
+    : import.meta.env.VITE_BACKEND_URL;
 
   const handleRegister = async (e) => {
     e.preventDefault();

@@ -6,9 +6,11 @@ const TrackLocation = ({ addLocation }) => {
   const [note, setNote] = useState('');  // State to track the user's note input
   const [error, setError] = useState(null);  // State to track errors
 
-  // Use the deployed backend URL from environment variables
-  const apiUrl = import.meta.env.VITE_BACKEND_URL;  // For Vite
-  // const apiUrl = process.env.REACT_APP_BACKEND_URL;  // For Create React App
+  // Dynamically determine the backend URL based on environment
+  const isProduction = import.meta.env.MODE === 'production';
+  const apiUrl = isProduction 
+    ? import.meta.env.VITE_PROD_BACKEND_URL 
+    : import.meta.env.VITE_BACKEND_URL;
 
   // Function to capture and send location to the backend
   const trackLocation = () => {
