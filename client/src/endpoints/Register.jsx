@@ -9,43 +9,48 @@ const Register = () => {
   const [message, setMessage] = useState('');
 
   // Dynamically determine the backend URL based on environment
-  const isProduction = import.meta.env.MODE === 'production';
-  const apiUrl = isProduction 
+  const apiUrl = import.meta.env.MODE === 'production' 
     ? import.meta.env.VITE_PROD_BACKEND_URL 
     : import.meta.env.VITE_BACKEND_URL;
 
+  // Function to handle errors
+  const handleError = (error) => {
+    if (error.response) {
+      if (error.response.status === 400) {
+        setMessage('User already exists or invalid data.');
+      } else if (error.response.status === 500) {
+        setMessage('Server error occurred. Please try again later.');
+      } else {
+        setMessage(`Error registering user: ${error.response.data.message || 'Unknown error'}`);
+      }
+    } else if (error.request) {
+      setMessage('No response from server. Please check your internet connection.');
+    } else {
+      setMessage(`Unexpected error: ${error.message}`);
+    }
+    console.error('Error registering user:', error);
+  };
+
+  // Function to handle user registration
   const handleRegister = async (e) => {
     e.preventDefault();
+    
     try {
-      // Make the API request to register the user
       const response = await axios.post(`${apiUrl}/api/auth/register`, {
         firstName,
         lastName,
         userName,
         password,
       });
-
-      // Use the response
+  
       if (response.status === 201) {
         setMessage('User registered successfully!');
-        console.log('Registration successful:', response.data);
-      } else {
-        setMessage('Unexpected response from the server.');
       }
     } catch (error) {
-      // Handle specific Axios errors
-      if (error.response) {
-        if (error.response.status === 400) {
-          setMessage('User already exists or invalid data.');
-        } else if (error.response.status === 500) {
-          setMessage('Server error occurred. Please try again later.');
-        } else {
-          setMessage(`Error registering user: ${error.response.data.message || 'Unknown error'}`);
-        }
-      } else if (error.request) {
-        setMessage('No response from server. Please check your internet connection.');
+      if (error.response && error.response.data.message) {
+        setMessage(error.response.data.message);  // Show specific error message from the backend
       } else {
-        setMessage(`Unexpected error: ${error.message}`);
+        setMessage('Error during registration. Please try again.');
       }
       console.error('Error registering user:', error);
     }

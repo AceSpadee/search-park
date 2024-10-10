@@ -6,6 +6,14 @@ const User = require('../models/User');
 // Controller function for registering a new user
 const register = async (req, res) => {
   try {
+    // Check if the user with the same userName already exists
+    const existingUser = await User.findOne({ userName: req.body.userName });
+
+    if (existingUser) {
+      // If userName already exists, respond with a 400 Bad Request and a message
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+
     // Create a new user instance using the User model
     const user = new User({
       firstName: req.body.firstName,   // Assign first name from the request
@@ -20,7 +28,13 @@ const register = async (req, res) => {
     // Respond with a success message and status code 201 (Created)
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
-    // If there's any error during registration, log the error and respond with status code 500
+    // Handle MongoDB duplicate key error (e.g., for unique fields like userName)
+    if (error.code === 11000) {
+      // Respond with a 400 Bad Request and a message
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+
+    // If it's any other error, log the error and respond with status code 500 (Server Error)
     console.error('Error during registration:', error);
     res.status(500).json({ message: 'Server error during registration' });
   }
