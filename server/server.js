@@ -6,14 +6,21 @@ const cors = require('cors');
 const app = express();
 const apiRoutes = require('./routes');
 
+// Determine if we are in production mode
+const isProduction = process.env.NODE_ENV === 'production';
+
+// MongoDB connection based on environment
+const MONGODB_URI = isProduction ? process.env.PROD_MONGODB_URI : process.env.MONGODB_URI;
+
 // Connect to MongoDB
-connectDB();
+connectDB(MONGODB_URI);
 
 // Serve static files (if needed).
 app.use(express.static('public'));
 
 // CORS Configuration
-const allowedOrigins = [process.env.RENDER_URL]; // Replace with your Render frontend URL
+const CLIENT_URL = isProduction ? process.env.PROD_CLIENT_URL : process.env.CLIENT_URL;
+const allowedOrigins = [process.env.CLIENT_URL]; // Replace with your Render frontend URL
 
 // Middleware
 app.use(express.json());
@@ -35,5 +42,5 @@ app.use('/api', apiRoutes);
 // Start the server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+})
