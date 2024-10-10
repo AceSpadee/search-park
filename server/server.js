@@ -20,7 +20,7 @@ app.use(express.static('public'));
 
 // CORS Configuration
 const CLIENT_URL = isProduction ? process.env.PROD_CLIENT_URL : process.env.CLIENT_URL;
-const allowedOrigins = [process.env.CLIENT_URL]; // Replace with your Render frontend URL
+const allowedOrigins = [CLIENT_URL]; // Replace with your Render frontend URL
 
 // Middleware
 app.use(express.json());
