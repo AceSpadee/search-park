@@ -34,7 +34,7 @@ const locationSchema = new Schema({
 // Pre-save hook to format the timestamp before saving
 locationSchema.pre('save', function (next) {
   // Format the timestamp and store it in the formattedTimestamp field
-  this.formattedTimestamp = moment(this.timestamp).format('MM/DD/YYYY HH:mm');
+  this.formattedTimestamp = moment(this.timestamp).utc().format('MM/DD/YYYY HH:mm');
   next();
 });
 
