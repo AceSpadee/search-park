@@ -11,6 +11,9 @@ const userLocationSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  formattedTimestamp: {
+    type: String,  // Store the formatted timestamp for each location
+  },
 });
 
 const userSchema = new mongoose.Schema({

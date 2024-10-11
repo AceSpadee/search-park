@@ -25,6 +25,7 @@ const saveLocation = async (req, res) => {
     user.locations.push({
       lat: req.body.lat,
       lng: req.body.lng,
+      formattedTimestamp: moment().format('MM/DD/YYYY HH:mm')  // Store formatted timestamp in user's locations
     });
 
     await user.save(); // Save the updated user document
