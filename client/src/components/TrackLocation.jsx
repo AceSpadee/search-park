@@ -46,19 +46,21 @@ const TrackLocation = ({ addLocation }) => {
         setError('User not logged in. Please log in to track your location.');
         return;
       }
-
+  
       const response = await axios.post(`${apiUrl}/api/location`, locationData, {
         headers: { 'x-auth-token': token },
       });
-
-      setLocation(locationData);
-      addLocation(locationData);  // Update the map with the new location
-      console.log('Location saved:', response.data);
+  
+      const savedLocation = response.data.location;  // Use the saved location from the response
+  
+      setLocation(savedLocation);  // Update the local state with the saved location from the backend
+      addLocation(savedLocation);  // Update the map with the new location
+      console.log('Location saved:', savedLocation);
     } catch (error) {
       handleError(error);
     }
   };
-
+  
   // Function to get the user's current geolocation and save it
   const trackLocation = () => {
     setError(null);  // Clear previous errors
