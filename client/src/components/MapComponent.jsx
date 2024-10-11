@@ -6,82 +6,92 @@ import 'leaflet/dist/leaflet.css';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-
 // Fix the broken marker icon issue
-let DefaultIcon = L.icon({
+const DefaultIcon = L.icon({
   iconUrl: markerIcon,
   shadowUrl: markerShadow,
-  iconSize: [25, 41], // Size of the icon
-  iconAnchor: [12, 41], // Point of the icon which will correspond to marker's location
-  popupAnchor: [1, -34], // Point from which the popup should open relative to the iconAnchor
-  shadowSize: [41, 41], // Size of the shadow
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const MapComponent = () => {
+const MapComponent = ({ newLocation }) => {
   const [markers, setMarkers] = useState([]);  // Initialize markers as an empty array
   const [error, setError] = useState(null);  // State to track errors
 
   // Dynamically determine the backend URL based on environment
-  const isProduction = import.meta.env.MODE === 'production';
-  const apiUrl = isProduction 
+  const apiUrl = import.meta.env.MODE === 'production' 
     ? import.meta.env.VITE_PROD_BACKEND_URL 
     : import.meta.env.VITE_BACKEND_URL;
 
-  
-  // Fetch locations from the backend when the component loads
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const token = localStorage.getItem('token');  // Get JWT token from localStorage
-        if (!token) {
-          setError('User not logged in. Please log in to view locations.');
-          return;
-        }
+  // Utility function to get the JWT token
+  const getToken = () => localStorage.getItem('token');
 
-        // Make a GET request to fetch the user's saved locations
-        const response = await axios.get(`${apiUrl}/api/location`, {
-          headers: {
-            'x-auth-token': token,  // Send the JWT token in the request header
-          },
-        });
-
-        setMarkers(response.data);  // Set the fetched locations as markers
-      } catch (error) {
-        // Handle specific Axios errors
-        if (error.response) {
-          if (error.response.status === 401) {
-            setError('Authentication failed. Please log in again.');
-          } else if (error.response.status === 500) {
-            setError('Server error occurred. Please try again later.');
-          } else {
-            setError(`Failed to fetch locations: ${error.response.data.message || 'Unknown error'}`);
-          }
-        } else if (error.request) {
-          setError('No response from server. Please check your internet connection.');
-        } else {
-          setError(`Unexpected error: ${error.message}`);
-        }
-        console.error('Error fetching locations:', error);
+  // Function to handle errors
+  const handleError = (error) => {
+    if (error.response) {
+      if (error.response.status === 401) {
+        setError('Authentication failed. Please log in again.');
+      } else if (error.response.status === 500) {
+        setError('Server error occurred. Please try again later.');
+      } else {
+        setError(`Failed to fetch locations: ${error.response.data.message || 'Unknown error'}`);
       }
-    };
+    } else if (error.request) {
+      setError('No response from server. Please check your internet connection.');
+    } else {
+      setError(`Unexpected error: ${error.message}`);
+    }
+    console.error('Error fetching locations:', error);
+  };
 
-    fetchLocations();  // Fetch locations on component mount
+  // Fetch locations from the backend when the component loads
+  const fetchLocations = async () => {
+    const token = getToken();  // Get JWT token from localStorage
+    if (!token) {
+      setError('User not logged in. Please log in to view locations.');
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${apiUrl}/api/location`, {
+        headers: { 'x-auth-token': token },
+      });
+      setMarkers(response.data);  // Set the fetched locations as markers
+    } catch (error) {
+      handleError(error);
+    }
+  };
+
+  // Fetch locations when the component mounts
+  useEffect(() => {
+    fetchLocations();
   }, [apiUrl]);
 
-  // Handle the drag end event to update the marker's position
+  // Add new marker when a new location is passed in
+  useEffect(() => {
+    if (newLocation) {
+      setMarkers((prevMarkers) => [...prevMarkers, newLocation]);  // Add the new location dynamically
+    }
+  }, [newLocation]);
+
+  // Handle marker drag end event to update the marker's position
   const handleMarkerDragEnd = (event, index) => {
     const newPosition = event.target.getLatLng();  // Get new marker position
-    const updatedMarkers = [...markers];  // Create a copy of the markers
-    updatedMarkers[index] = { ...updatedMarkers[index], lat: newPosition.lat, lng: newPosition.lng };  // Update the marker's lat/lng
-    setMarkers(updatedMarkers);  // Update the state with the new marker position
+    setMarkers((prevMarkers) => {
+      const updatedMarkers = [...prevMarkers];
+      updatedMarkers[index] = { ...updatedMarkers[index], lat: newPosition.lat, lng: newPosition.lng };
+      return updatedMarkers;
+    });
     console.log(`Marker ${index} moved to: `, newPosition);  // Log new position
   };
 
   return (
     <div>
-      {error && <p style={{ color: 'red' }}>{error}</p>}  {/* Display error message if exists */}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       
       <MapContainer center={[45.6280, -122.6739]} zoom={12} style={{ height: '400px', width: '100%' }}>
         {/* Esri Satellite Imagery as the base layer */}
@@ -97,19 +107,17 @@ const MapComponent = () => {
           opacity={0.4}
         />
 
-        {/* Render the markers fetched from the backend */}
+        {/* Render markers */}
         {markers.map((location, index) => (
           <Marker
             key={index}
             position={[location.lat, location.lng]}
-            draggable={true}  // Enable marker dragging
-            eventHandlers={{
-              dragend: (event) => handleMarkerDragEnd(event, index),  // Handle drag end event
-            }}
+            draggable={true}
+            eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}
           >
             <Popup>
               <h4>Location Note</h4>
-              <p>{location.notes || 'No notes for this location'}</p>
+              {location.notes || 'No notes for this location'}
             </Popup>
           </Marker>
         ))}
