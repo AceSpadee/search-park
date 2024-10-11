@@ -1,4 +1,4 @@
-const moment = require('moment');
+const moment = require('moment-timezone');
 const { Schema, model } = require('mongoose');
 
 const locationSchema = new Schema({
@@ -33,8 +33,8 @@ const locationSchema = new Schema({
 
 // Pre-save hook to format the timestamp before saving
 locationSchema.pre('save', function (next) {
-  // Format the timestamp and store it in the formattedTimestamp field
-  this.formattedTimestamp = moment(this.timestamp).utc().format('MM/DD/YYYY HH:mm');
+  this.timestamp = new Date();
+  this.formattedTimestamp = moment(this.timestamp).tz('America/Los_Angeles').format('MM/DD/YYYY HH:mm');
   next();
 });
 
