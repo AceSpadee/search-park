@@ -17,8 +17,8 @@ const saveLocation = async (req, res) => {
       lng: req.body.lng,
       notes: req.body.notes || '',
       user: user._id,
-      userFullName: user.fullName, // Assuming fullName is defined in the User model
-      formattedTimestamp: moment().format('MM/DD/YYYY HH:mm'),
+      userFullName: user.fullName,  // Assuming fullName is defined in the User model
+      timestamp: moment().utc().toDate(),  // Store the current timestamp in UTC
     });
 
     await location.save();
@@ -28,10 +28,10 @@ const saveLocation = async (req, res) => {
       _id: location._id,  // Store the location's _id
       lat: req.body.lat,
       lng: req.body.lng,
-      formattedTimestamp: moment().format('MM/DD/YYYY HH:mm'),
+      formattedTimestamp: location.formattedTimestamp,  // Use the pre-saved formatted timestamp
     });
 
-    await user.save(); // Save the updated user document
+    await user.save();  // Save the updated user document
 
     res.status(201).json({ message: 'Location saved successfully', location });
   } catch (error) {
@@ -47,19 +47,13 @@ const getLocations = async (req, res) => {
     const locations = await Location.find({ user: req.user.id })
       .populate('user', 'fullName');
 
-    // Add formattedTimestamp manually to each location
-    const formattedLocations = locations.map(location => ({
-      ...location.toObject(),
-      formattedTimestamp: moment(location.timestamp).format('MM/DD/YYYY HH:mm')
-    }));
-
-    res.status(200).json(formattedLocations);
+    // Return the locations as is since they already contain the formattedTimestamp
+    res.status(200).json(locations);
   } catch (error) {
     console.error('Error fetching locations:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
-
 const updateLocation = async (req, res) => {
   try {
     const { originalLat, originalLng, newLat, newLng } = req.body;  // Get lat/lng from the request body

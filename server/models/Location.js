@@ -12,7 +12,7 @@ const locationSchema = new Schema({
   },
   timestamp: { 
     type: Date,
-    default: Date.now,  // Store the original timestamp as a Date object
+    default: () => moment().utc().toDate(),  // Store the original timestamp as a Date object
   },
   formattedTimestamp: {
     type: String,  // Store the formatted timestamp directly in the database
