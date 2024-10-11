@@ -2,6 +2,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';  // Import Leaflet to set marker icon
 
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -79,14 +80,56 @@ const MapComponent = ({ newLocation }) => {
   }, [newLocation]);
 
   // Handle marker drag end event to update the marker's position
-  const handleMarkerDragEnd = (event, index) => {
+  const handleMarkerDragEnd = async (event, index) => {
     const newPosition = event.target.getLatLng();  // Get new marker position
+    const token = getToken();  // Get JWT token from localStorage
+  
+    const originalLat = markers[index].lat;
+    const originalLng = markers[index].lng;
+  
+    // Update the marker's position in the state
     setMarkers((prevMarkers) => {
       const updatedMarkers = [...prevMarkers];
       updatedMarkers[index] = { ...updatedMarkers[index], lat: newPosition.lat, lng: newPosition.lng };
       return updatedMarkers;
     });
-    console.log(`Marker ${index} moved to: `, newPosition);  // Log new position
+  
+    // Send the updated coordinates to the backend
+    try {
+      await axios.put(`${apiUrl}/api/location`, 
+        {
+          originalLat,  // Send original lat
+          originalLng,  // Send original lng
+          newLat: newPosition.lat, 
+          newLng: newPosition.lng 
+        },
+        { headers: { 'x-auth-token': token } }  // Send token in headers for authentication
+      );
+      console.log(`Location updated successfully to: `, newPosition);
+    } catch (error) {
+      console.error('Error updating location:', error);
+      setError('Failed to update location. Please try again later.');
+    }
+  };
+
+  const handleDeleteMarker = async (index) => {
+    const token = getToken();  // Get JWT token from localStorage
+    const { _id } = markers[index];  // Get the location's _id
+  
+    // Send a DELETE request to the backend to remove the marker
+    try {
+      await axios.delete(`${apiUrl}/api/location`, {
+        headers: { 'x-auth-token': token },
+        data: { locationId: _id }  // Send the location's _id with the correct key
+      });
+  
+      // Remove the marker from the state after successful deletion
+      setMarkers((prevMarkers) => prevMarkers.filter((_, i) => i !== index));
+      console.log(`Marker with id (${_id}) deleted successfully.`);
+    } catch (error) {
+      console.error('Error deleting marker:', error);
+      setError('Failed to delete marker. Please try again later.');
+    }
   };
 
   return (
@@ -118,6 +161,7 @@ const MapComponent = ({ newLocation }) => {
             <Popup>
               <h4>Location Note</h4>
               {location.notes || 'No notes for this location'}
+              <button onClick={() => handleDeleteMarker(index)}>Delete Marker</button>
             </Popup>
           </Marker>
         ))}

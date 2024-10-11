@@ -11,21 +11,24 @@ const saveLocation = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Create a new location document
     const location = new Location({
       lat: req.body.lat,
       lng: req.body.lng,
       notes: req.body.notes || '',
-      user: user._id,  // Store the user's ObjectId in the Location document
-      userFullName: user.fullName, // Store the user's full name directly
-      formattedTimestamp: moment().format('MM/DD/YYYY HH:mm'), // Manually format the timestamp before saving
+      user: user._id,
+      userFullName: user.fullName, // Assuming fullName is defined in the User model
+      formattedTimestamp: moment().format('MM/DD/YYYY HH:mm'),
     });
 
     await location.save();
 
+    // Push the location's _id into the user's locations array
     user.locations.push({
+      _id: location._id,  // Store the location's _id
       lat: req.body.lat,
       lng: req.body.lng,
-      formattedTimestamp: moment().format('MM/DD/YYYY HH:mm')  // Store formatted timestamp in user's locations
+      formattedTimestamp: moment().format('MM/DD/YYYY HH:mm'),
     });
 
     await user.save(); // Save the updated user document
@@ -57,8 +60,57 @@ const getLocations = async (req, res) => {
   }
 };
 
+const updateLocation = async (req, res) => {
+  try {
+    const { originalLat, originalLng, newLat, newLng } = req.body;  // Get lat/lng from the request body
+
+    // Find the location by original lat and lng and update it with new coordinates
+    const updatedLocation = await Location.findOneAndUpdate(
+      { lat: originalLat, lng: originalLng },  // Find the location by its original coordinates
+      { lat: newLat, lng: newLng },  // Update with new coordinates
+      { new: true }  // Return the updated document
+    );
+
+    if (!updatedLocation) {
+      return res.status(404).json({ message: 'Location not found' });
+    }
+
+    res.json({ message: 'Location updated successfully', updatedLocation });
+  } catch (error) {
+    console.error('Error updating location:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Controller to delete a location by lat/lng
+const deleteLocation = async (req, res) => {
+  try {
+    const { locationId } = req.body; // Get locationId from the request body
+
+    // Find the location by its _id and delete it
+    const deletedLocation = await Location.findByIdAndDelete(locationId);
+
+    if (!deletedLocation) {
+      return res.status(404).json({ message: 'Location not found' });
+    }
+
+    // Remove the location from the User's locations array using the location's _id
+    await User.updateMany(
+      { 'locations._id': locationId },  // Match the location's _id in the user's locations array
+      { $pull: { locations: { _id: locationId } } }  // Pull the matching location from locations array
+    );
+
+    res.json({ message: 'Location deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting location:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Export the controller functions so they can be used in routes
 module.exports = {
   saveLocation,
   getLocations,
+  updateLocation,
+  deleteLocation,
 };
