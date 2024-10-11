@@ -1,6 +1,18 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
+// Define the schema for storing lat and lng directly in the User model
+const userLocationSchema = new mongoose.Schema({
+  lat: {
+    type: Number,
+    required: true,
+  },
+  lng: {
+    type: Number,
+    required: true,
+  },
+});
+
 const userSchema = new mongoose.Schema({
   firstName: {
     type: String,
@@ -20,20 +32,7 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: [4, 'Password must be at least 4 characters'],
   },
-  locations: [
-    {
-      lat: Number,
-      lng: Number,
-      timestamp: {
-        type: Date,
-        default: Date.now,
-      },
-      notes: {
-        type: String,
-        required: false,
-      },
-    },
-  ],
+  locations: [userLocationSchema],  // Store lng and lat directly in User model
 });
 
 // Pre-save hook to hash the password before saving
@@ -51,10 +50,10 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-// Compare incoming password with hashed password
-userSchema.methods.isCorrectPassword = async function (password) {
-  return bcrypt.compare(password, this.password);
-};
+// Virtual property to combine firstName and lastName
+userSchema.virtual('fullName').get(function () {
+  return `${this.firstName} ${this.lastName}`;
+});
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;
