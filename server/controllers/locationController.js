@@ -1,6 +1,5 @@
 const User = require('../models/User'); // Import User model
 const Location = require('../models/Location'); // Import Location model
-const moment = require('moment');
 
 // Controller to save a new location for the user
 const saveLocation = async (req, res) => {
@@ -18,7 +17,7 @@ const saveLocation = async (req, res) => {
       notes: req.body.notes || '',
       user: user._id,
       userFullName: user.fullName,  // Assuming fullName is defined in the User model
-      timestamp: moment().utc().toDate(),  // Store the current timestamp in UTC
+      timestamp: new Date(),  // Store the current timestamp in UTC
     });
 
     await location.save();
