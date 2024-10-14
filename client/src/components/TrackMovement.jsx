@@ -4,7 +4,7 @@ import axios from 'axios';
 const TrackMovement = ({ addLocation }) => {
   const [watchId, setWatchId] = useState(null);  // Store the geolocation watch ID
   const [error, setError] = useState(null);  // Track errors
-  const [intervalId, setIntervalId] = useState(null); // Interval ID for saving movement
+  const [lastSavedTime, setLastSavedTime] = useState(0);  // Track the last time the location was saved
 
   // Dynamically determine the backend URL based on environment
   const isProduction = import.meta.env.MODE === 'production';
@@ -21,19 +21,31 @@ const TrackMovement = ({ addLocation }) => {
     console.error('Tracking error:', error);
   };
 
-  // Function to save movement to the backend
+  // Function to save movement to the backend every 5 seconds
   const saveMovement = async (locationData) => {
-    try {
-      const token = getToken();
-      const response = await axios.post(`${apiUrl}/api/movement`, locationData, {
-        headers: { 'x-auth-token': token },
-      });
-  
-      console.log('Response from backend:', response.data);  // Log the response to see if it includes _id
-      addLocation(response.data);  // Add movement to the map
-    } catch (error) {
-      console.error('Error saving movement:', error);
-      setError('Failed to save movement');
+    const currentTime = Date.now();
+    if (currentTime - lastSavedTime >= 5000) {  // Check if 5 seconds have passed
+      try {
+        const token = getToken();
+        if (!token) {
+          setError('User not logged in. Please log in to track your movement.');
+          return;
+        }
+
+        console.log('Sending movement data to backend:', locationData);  // Log data
+
+        const response = await axios.post(`${apiUrl}/api/movement`, locationData, {
+          headers: { 'x-auth-token': token },
+        });
+
+        console.log('Response from backend:', response.data);  // Log response
+        addLocation(response.data);  // Add movement to the map
+
+        setLastSavedTime(currentTime);  // Update the last saved time
+      } catch (error) {
+        console.error('Error saving movement:', error);
+        setError('Failed to save movement');
+      }
     }
   };
 
@@ -51,7 +63,8 @@ const TrackMovement = ({ addLocation }) => {
             timestamp: new Date(),
           };
 
-          saveMovement(locationData);  // Send the current location as movement data to the backend
+          // Save the movement data every 5 seconds
+          saveMovement(locationData);
         },
         (geoError) => {
           handleError(`Geolocation error: ${geoError.message}`);
@@ -59,26 +72,6 @@ const TrackMovement = ({ addLocation }) => {
         { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
       );
       setWatchId(id);  // Store the watch ID to stop tracking later
-
-      // Set up a 5-second interval to send movement updates
-      const interval = setInterval(() => {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            const locationData = {
-              lat: latitude,
-              lng: longitude,
-              timestamp: new Date(),
-            };
-            saveMovement(locationData);  // Save the movement data to the backend every 5 seconds
-          },
-          (geoError) => {
-            handleError(`Geolocation error: ${geoError.message}`);
-          },
-          { enableHighAccuracy: true }
-        );
-      }, 5000);  // Save movement data every 5 seconds
-      setIntervalId(interval);
     } else {
       setError('Geolocation is not supported by this browser.');
     }
@@ -90,23 +83,16 @@ const TrackMovement = ({ addLocation }) => {
       navigator.geolocation.clearWatch(watchId);  // Clear the geolocation watch
       setWatchId(null);  // Reset the watchId
     }
-    if (intervalId) {
-      clearInterval(intervalId);  // Clear the 5-second interval
-      setIntervalId(null);  // Reset the intervalId
-    }
   };
 
-  // Clean up the geolocation watch and interval when the component is unmounted
+  // Clean up the geolocation watch when the component is unmounted
   useEffect(() => {
     return () => {
       if (watchId) {
         navigator.geolocation.clearWatch(watchId);
       }
-      if (intervalId) {
-        clearInterval(intervalId);  // Clear the interval on unmount
-      }
     };
-  }, [watchId, intervalId]);
+  }, [watchId]);
 
   return (
     <div>
