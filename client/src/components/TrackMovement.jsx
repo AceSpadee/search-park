@@ -4,7 +4,8 @@ import axios from 'axios';
 const TrackMovement = ({ addLocation }) => {
   const [watchId, setWatchId] = useState(null);  // Store the geolocation watch ID
   const [error, setError] = useState(null);  // Track errors
-  const [lastSavedTime, setLastSavedTime] = useState(0);  // Track the last time the location was saved
+  const [path, setPathState] = useState([]);  // Local state to store the path
+  const [lastLocation, setLastLocation] = useState(null);  // State to show last known location
 
   // Dynamically determine the backend URL based on environment
   const isProduction = import.meta.env.MODE === 'production';
@@ -21,31 +22,27 @@ const TrackMovement = ({ addLocation }) => {
     console.error('Tracking error:', error);
   };
 
-  // Function to save movement to the backend every 5 seconds
+  // Function to save movement to the backend and update the path
   const saveMovement = async (locationData) => {
-    const currentTime = Date.now();
-    if (currentTime - lastSavedTime >= 5000) {  // Check if 5 seconds have passed
-      try {
-        const token = getToken();
-        if (!token) {
-          setError('User not logged in. Please log in to track your movement.');
-          return;
-        }
-
-        console.log('Sending movement data to backend:', locationData);  // Log data
-
-        const response = await axios.post(`${apiUrl}/api/movement`, locationData, {
-          headers: { 'x-auth-token': token },
-        });
-
-        console.log('Response from backend:', response.data);  // Log response
-        addLocation(response.data);  // Add movement to the map
-
-        setLastSavedTime(currentTime);  // Update the last saved time
-      } catch (error) {
-        console.error('Error saving movement:', error);
-        setError('Failed to save movement');
+    try {
+      const token = getToken();
+      if (!token) {
+        setError('User not logged in. Please log in to track your movement.');
+        return;
       }
+
+      console.log('Saving movement:', locationData);  // Log the location data
+
+      const response = await axios.post(`${apiUrl}/api/movement`, locationData, {
+        headers: { 'x-auth-token': token },
+      });
+
+      addLocation(response.data);  // Add the new movement to the map
+      setPathState((prevPath) => [...prevPath, [locationData.lat, locationData.lng]]);  // Update the local path state
+
+    } catch (error) {
+      console.error('Error saving movement:', error);
+      setError('Failed to save movement');
     }
   };
 
@@ -63,8 +60,13 @@ const TrackMovement = ({ addLocation }) => {
             timestamp: new Date(),
           };
 
-          // Save the movement data every 5 seconds
+          console.log('New location:', locationData);  // Log the location data for debugging
+
+          // Save the movement and update the path
           saveMovement(locationData);
+
+          // Update the last known location for visual feedback
+          setLastLocation(`Lat: ${latitude}, Lng: ${longitude}`);
         },
         (geoError) => {
           handleError(`Geolocation error: ${geoError.message}`);
@@ -108,6 +110,13 @@ const TrackMovement = ({ addLocation }) => {
 
       {/* Display any error messages */}
       {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {/* Display last known location for feedback */}
+      {lastLocation && (
+        <p>
+          <strong>Last known location:</strong> {lastLocation}
+        </p>
+      )}
     </div>
   );
 };

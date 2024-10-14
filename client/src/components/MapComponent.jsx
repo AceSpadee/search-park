@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
@@ -19,7 +19,7 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const MapComponent = ({ newLocation }) => {
+const MapComponent = ({ newLocation, path }) => {  // Add `path` as a prop
   const [markers, setMarkers] = useState([]);  // Initialize markers as an empty array
   const [error, setError] = useState(null);  // State to track errors
 
@@ -49,47 +49,42 @@ const MapComponent = ({ newLocation }) => {
     console.error('Error fetching locations:', error);
   };
 
-// Fetch locations from the backend when the component loads
-const fetchLocations = async () => {
-  const token = getToken();  // Get JWT token from localStorage
-  if (!token) {
-    setError('User not logged in. Please log in to view locations.');
-    return;
-  }
+  // Fetch locations from the backend when the component loads
+  const fetchLocations = async () => {
+    const token = getToken();  // Get JWT token from localStorage
+    if (!token) {
+      setError('User not logged in. Please log in to view locations.');
+      return;
+    }
 
-  try {
-    const response = await axios.get(`${apiUrl}/api/location`, {
-      headers: { 'x-auth-token': token },
-    });
+    try {
+      const response = await axios.get(`${apiUrl}/api/location`, {
+        headers: { 'x-auth-token': token },
+      });
 
-    // Ensure the fetched locations include _id
-    const fetchedLocations = response.data.map((location) => ({
-      ...location,
-      _id: location._id || 'missing-id',  // Fallback if somehow _id is missing
-    }));
+      // Ensure the fetched locations include _id
+      const fetchedLocations = response.data.map((location) => ({
+        ...location,
+        _id: location._id || 'missing-id',  // Fallback if somehow _id is missing
+      }));
 
-    setMarkers(fetchedLocations);  // Set the fetched locations as markers
-  } catch (error) {
-    handleError(error);
-  }
-};
+      setMarkers(fetchedLocations);  // Set the fetched locations as markers
+    } catch (error) {
+      handleError(error);
+    }
+  };
 
   // Fetch locations when the component mounts
   useEffect(() => {
     fetchLocations();
-  }, [apiUrl]);
+  }, []);  // Only run on initial render
 
-// Add new marker when a new location is passed in
-useEffect(() => {
-  if (newLocation) {
-    console.log('New location:', newLocation);  // Check what newLocation contains
-    if (newLocation._id) {
-      setMarkers((prevMarkers) => [...prevMarkers, newLocation]);  // Add the new location dynamically
-    } else {
-      console.error('New location is missing an _id');
+  // Add new marker when a new location is passed in
+  useEffect(() => {
+    if (newLocation && newLocation._id) {
+      setMarkers((prevMarkers) => [...prevMarkers, newLocation]);  // Add the new location as a marker
     }
-  }
-}, [newLocation]);
+  }, [newLocation]);
 
   // Handle marker drag end event to update the marker's position
   const handleMarkerDragEnd = async (event, index) => {
@@ -164,21 +159,20 @@ useEffect(() => {
           opacity={0.4}
         />
 
-        {/* Render markers */}
+        {/* Display markers */}
         {markers.map((location, index) => (
           <Marker
             key={index}
             position={[location.lat, location.lng]}
-            draggable={true}
-            eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}
+            draggable={true}  // Make the marker draggable
+            eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}  // Handle drag end event
           >
-            <Popup>
-              <h4>Location Note</h4>
-              {location.notes || 'No notes for this location'}
-              <button onClick={() => handleDeleteMarker(index)}>Delete Marker</button>
-            </Popup>
+            <Popup>{location.notes || 'No notes for this location'}</Popup>
           </Marker>
         ))}
+
+        {/* Draw path with polyline */}
+        {path && path.length > 1 && <Polyline positions={path} color="blue" />}
       </MapContainer>
     </div>
   );

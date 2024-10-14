@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 
 const TrackLocation = ({ addLocation }) => {
-  const [location, setLocation] = useState(null);
+  const [location, setLocation] = useState(null);  // State to track saved location
   const [note, setNote] = useState('');  // State to track the user's note input
   const [error, setError] = useState(null);  // State to track errors
 
@@ -43,8 +43,9 @@ const TrackLocation = ({ addLocation }) => {
         headers: { 'x-auth-token': token },
       });
       addLocation(response.data);  // Add to map
+      setLocation(locationData);   // Update local state with saved location
     } catch (error) {
-      console.error('Error saving location:', error);
+      handleError(error);
     }
   };
 
@@ -84,8 +85,12 @@ const TrackLocation = ({ addLocation }) => {
       {/* Display error message if it exists */}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       
-      {/* Display saved location */}
-      {location && <p>Location saved: {location.lat}, {location.lng}</p>}
+      {/* Display saved location coordinates */}
+      {location && (
+        <p>
+          <strong>Location saved:</strong> Lat {location.lat}, Lng {location.lng}
+        </p>
+      )}
     </div>
   );
 };
