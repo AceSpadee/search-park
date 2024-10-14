@@ -49,43 +49,56 @@ const MapComponent = ({ newLocation }) => {
     console.error('Error fetching locations:', error);
   };
 
-  // Fetch locations from the backend when the component loads
-  const fetchLocations = async () => {
-    const token = getToken();  // Get JWT token from localStorage
-    if (!token) {
-      setError('User not logged in. Please log in to view locations.');
-      return;
-    }
+// Fetch locations from the backend when the component loads
+const fetchLocations = async () => {
+  const token = getToken();  // Get JWT token from localStorage
+  if (!token) {
+    setError('User not logged in. Please log in to view locations.');
+    return;
+  }
 
-    try {
-      const response = await axios.get(`${apiUrl}/api/location`, {
-        headers: { 'x-auth-token': token },
-      });
-      setMarkers(response.data);  // Set the fetched locations as markers
-    } catch (error) {
-      handleError(error);
-    }
-  };
+  try {
+    const response = await axios.get(`${apiUrl}/api/location`, {
+      headers: { 'x-auth-token': token },
+    });
+
+    // Ensure the fetched locations include _id
+    const fetchedLocations = response.data.map((location) => ({
+      ...location,
+      _id: location._id || 'missing-id',  // Fallback if somehow _id is missing
+    }));
+
+    setMarkers(fetchedLocations);  // Set the fetched locations as markers
+  } catch (error) {
+    handleError(error);
+  }
+};
 
   // Fetch locations when the component mounts
   useEffect(() => {
     fetchLocations();
   }, [apiUrl]);
 
-  // Add new marker when a new location is passed in
-  useEffect(() => {
-    if (newLocation) {
-      setMarkers((prevMarkers) => [...prevMarkers, newLocation]);  // Add the new location dynamically
-    }
-  }, [newLocation]);
+// Add new marker when a new location is passed in
+useEffect(() => {
+  if (newLocation && newLocation._id) {
+    setMarkers((prevMarkers) => [...prevMarkers, newLocation]);  // Add the new location dynamically
+  } else {
+    console.error('New location is missing an _id');
+  }
+}, [newLocation]);
 
   // Handle marker drag end event to update the marker's position
   const handleMarkerDragEnd = async (event, index) => {
     const newPosition = event.target.getLatLng();  // Get new marker position
     const token = getToken();  // Get JWT token from localStorage
-  
-    const originalLat = markers[index].lat;
-    const originalLng = markers[index].lng;
+    
+    const locationId = markers[index]._id;  // Get the location's _id from markers
+    
+    if (!locationId) {
+      setError('Unable to update location: locationId is missing.');
+      return;
+    }
   
     // Update the marker's position in the state
     setMarkers((prevMarkers) => {
@@ -94,16 +107,14 @@ const MapComponent = ({ newLocation }) => {
       return updatedMarkers;
     });
   
-    // Send the updated coordinates to the backend
+    // Send the updated coordinates to the backend, include the location ID in the URL
     try {
-      await axios.put(`${apiUrl}/api/location`, 
+      await axios.put(`${apiUrl}/api/location/${locationId}`,  // Use locationId in the URL
         {
-          originalLat,  // Send original lat
-          originalLng,  // Send original lng
           newLat: newPosition.lat, 
           newLng: newPosition.lng 
         },
-        { headers: { 'x-auth-token': token } }  // Send token in headers for authentication
+        { headers: { 'x-auth-token': token } }
       );
       console.log(`Location updated successfully to: `, newPosition);
     } catch (error) {

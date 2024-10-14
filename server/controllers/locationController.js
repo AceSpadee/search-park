@@ -1,7 +1,9 @@
 const User = require('../models/User'); // Import User model
 const Location = require('../models/Location'); // Import Location model
+const { v4: uuidv4 } = require('uuid');  // Import uuid for session IDs
+const moment = require('moment-timezone');  // Import moment for time formatting
 
-// Controller to save a new location for the user
+// Controller to save movement during tracking
 const saveLocation = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -10,29 +12,19 @@ const saveLocation = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Create a new location document
+    // Create the location document
     const location = new Location({
       lat: req.body.lat,
       lng: req.body.lng,
       notes: req.body.notes || '',
       user: user._id,
-      userFullName: user.fullName,  // Assuming fullName is defined in the User model
-      timestamp: new Date(),  // Store the current timestamp in UTC
+      userFullName: user.fullName,
+      timestamp: new Date(),
     });
 
-    await location.save();
+    const savedLocation = await location.save();
 
-    // Push the location's _id into the user's locations array
-    user.locations.push({
-      _id: location._id,  // Store the location's _id
-      lat: req.body.lat,
-      lng: req.body.lng,
-      formattedTimestamp: location.formattedTimestamp,  // Use the pre-saved formatted timestamp
-    });
-
-    await user.save();  // Save the updated user document
-
-    res.status(201).json({ message: 'Location saved successfully', location });
+    res.status(201).json({ message: 'Location saved successfully', location: savedLocation });
   } catch (error) {
     console.error('Error saving location:', error);
     res.status(500).json({ message: 'Server error' });
@@ -53,14 +45,17 @@ const getLocations = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+// controllers/locationController.js
 const updateLocation = async (req, res) => {
   try {
-    const { originalLat, originalLng, newLat, newLng } = req.body;  // Get lat/lng from the request body
+    const { id } = req.params;  // Get the location ID from the URL
+    const { newLat, newLng } = req.body;  // Get the new coordinates from the request body
 
-    // Find the location by original lat and lng and update it with new coordinates
-    const updatedLocation = await Location.findOneAndUpdate(
-      { lat: originalLat, lng: originalLng },  // Find the location by its original coordinates
-      { lat: newLat, lng: newLng },  // Update with new coordinates
+    // Find the location by ID and update its coordinates
+    const updatedLocation = await Location.findByIdAndUpdate(
+      id,  // Use the location ID to find the location
+      { lat: newLat, lng: newLng },  // Update latitude and longitude
       { new: true }  // Return the updated document
     );
 
@@ -100,10 +95,114 @@ const deleteLocation = async (req, res) => {
   }
 };
 
+// Controller to start a new tracking session
+const startNewSession = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Create a new session with a unique sessionId
+    const sessionId = uuidv4();
+    const startTime = moment().tz('America/Los_Angeles').format('MM/DD/YYYY HH:mm');
+
+    const newSession = {
+      sessionId,
+      startTime,
+      movements: [],  // Initially empty, will be populated as movements are tracked
+    };
+
+    user.sessions.push(newSession);
+    await user.save();
+
+    res.status(201).json({ message: 'New session started', sessionId });
+  } catch (error) {
+    console.error('Error starting session:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Controller to save movement during tracking
+const saveMovement = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Prepare the location data from the request
+    const locationData = {
+      lat: req.body.lat,
+      lng: req.body.lng,
+      timestamp: new Date(),
+      formattedTimestamp: moment().tz('America/Los_Angeles').format('MM/DD/YYYY HH:mm'),
+      notes: req.body.notes || '',  // Ensure notes are captured
+    };
+
+    // Append the location to the movement history (in sessions or a separate collection)
+    if (user.sessions && user.sessions.length > 0) {
+      // Append to the latest session's movement history
+      const currentSession = user.sessions[user.sessions.length - 1];
+      currentSession.movements.push(locationData);
+    } else {
+      // Create a new session if no active session exists
+      const newSession = {
+        sessionId: uuidv4(),
+        startTime: moment().tz('America/Los_Angeles').format('MM/DD/YYYY HH:mm'),
+        movements: [locationData],  // Add the first movement
+      };
+      user.sessions.push(newSession);
+    }
+
+    await user.save();  // Save the user with the updated sessions
+
+    res.status(201).json({ message: 'Movement saved successfully' });
+  } catch (error) {
+    console.error('Error saving movement:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Controller to stop a session
+const stopSession = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const { sessionId } = req.body;
+    const endTime = moment().tz('America/Los_Angeles').format('MM/DD/YYYY HH:mm');
+
+    // Find the active session and set the endTime
+    const session = user.sessions.find((s) => s.sessionId === sessionId);
+
+    if (!session) {
+      return res.status(404).json({ message: 'Session not found' });
+    }
+
+    session.endTime = endTime;  // Set the end time when tracking stops
+
+    await user.save();
+
+    res.status(200).json({ message: 'Session stopped', session });
+  } catch (error) {
+    console.error('Error stopping session:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Export the controller functions so they can be used in routes
 module.exports = {
   saveLocation,
   getLocations,
   updateLocation,
   deleteLocation,
+  startNewSession,
+  saveMovement,
+  stopSession,
 };

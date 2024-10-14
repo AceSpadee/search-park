@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import TrackLocation from '../components/TrackLocation';
+import TrackMovement from '../components/TrackMovement';
 import MapComponent from '../components/MapComponent';
 
 const LocationApp = () => {
@@ -70,6 +71,8 @@ const LocationApp = () => {
 
       {/* Pass the addLocation function to TrackLocation so it can update the map */}
       <TrackLocation addLocation={addLocation} />
+
+      <TrackMovement addLocation={addLocation} />
 
       {/* Pass the locations to MapComponent to display them */}
       <MapComponent locations={locations} newLocation={newLocation} />

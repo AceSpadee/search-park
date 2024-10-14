@@ -18,7 +18,6 @@ const TrackLocation = ({ addLocation }) => {
   // Function to handle errors
   const handleError = (error) => {
     if (error.response) {
-      // Server responded with a status code outside of the range of 2xx
       if (error.response.status === 401) {
         setError('Authentication failed. Please log in again.');
       } else if (error.response.status === 403) {
@@ -29,10 +28,8 @@ const TrackLocation = ({ addLocation }) => {
         setError(`Failed to save location: ${error.response.data.message || 'Unknown error'}`);
       }
     } else if (error.request) {
-      // The request was made but no response was received
       setError('No response from server. Please check your internet connection.');
     } else {
-      // Something else caused the error
       setError(`Unexpected error: ${error.message}`);
     }
     console.error('Error saving location:', error);
@@ -46,21 +43,21 @@ const TrackLocation = ({ addLocation }) => {
         setError('User not logged in. Please log in to track your location.');
         return;
       }
-  
+
+      // Send the location to the backend and wait for the response
       const response = await axios.post(`${apiUrl}/api/location`, locationData, {
         headers: { 'x-auth-token': token },
       });
-  
+
       const savedLocation = response.data.location;  // Use the saved location from the response
-  
       setLocation(savedLocation);  // Update the local state with the saved location from the backend
-      addLocation(savedLocation);  // Update the map with the new location
+      addLocation(savedLocation);  // Update the map with the new location including its _id
       console.log('Location saved:', savedLocation);
     } catch (error) {
       handleError(error);
     }
   };
-  
+
   // Function to get the user's current geolocation and save it
   const trackLocation = () => {
     setError(null);  // Clear previous errors
