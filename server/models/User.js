@@ -33,6 +33,9 @@ const movementSchema = new mongoose.Schema({
   timestamp: {
     type: String,  // Store the formatted timestamp for each movement point
   },
+  _id: { 
+    type: mongoose.Schema.Types.ObjectId, auto: true // Ensure an _id is generated
+  },
 });
 
 // Schema for grouping movements into sessions

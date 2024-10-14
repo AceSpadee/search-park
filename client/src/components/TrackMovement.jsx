@@ -4,7 +4,7 @@ import axios from 'axios';
 const TrackMovement = ({ addLocation }) => {
   const [watchId, setWatchId] = useState(null);  // Store the geolocation watch ID
   const [error, setError] = useState(null);  // Track errors
-  const [intervalId, setIntervalId] = useState(null); // Interval ID for saving location
+  const [intervalId, setIntervalId] = useState(null); // Interval ID for saving movement
 
   // Dynamically determine the backend URL based on environment
   const isProduction = import.meta.env.MODE === 'production';
@@ -21,23 +21,19 @@ const TrackMovement = ({ addLocation }) => {
     console.error('Tracking error:', error);
   };
 
-  // Function to save location to the backend
-  const saveLocation = async (locationData) => {
+  // Function to save movement to the backend
+  const saveMovement = async (locationData) => {
     try {
       const token = getToken();
-      if (!token) {
-        setError('User not logged in. Please log in to track your movement.');
-        return;
-      }
-
-      // Post the location data to the server
-      const response = await axios.post(`${apiUrl}/api/location`, locationData, {
+      const response = await axios.post(`${apiUrl}/api/movement`, locationData, {
         headers: { 'x-auth-token': token },
       });
-      
-      addLocation(response.data.location);  // Update the map with the new location
+  
+      console.log('Response from backend:', response.data);  // Log the response to see if it includes _id
+      addLocation(response.data);  // Add movement to the map
     } catch (error) {
-      handleError(error);
+      console.error('Error saving movement:', error);
+      setError('Failed to save movement');
     }
   };
 
@@ -55,7 +51,7 @@ const TrackMovement = ({ addLocation }) => {
             timestamp: new Date(),
           };
 
-          saveLocation(locationData);  // Send the current location to the backend
+          saveMovement(locationData);  // Send the current location as movement data to the backend
         },
         (geoError) => {
           handleError(`Geolocation error: ${geoError.message}`);
@@ -64,7 +60,7 @@ const TrackMovement = ({ addLocation }) => {
       );
       setWatchId(id);  // Store the watch ID to stop tracking later
 
-      // Set up a 5-second interval to send location updates
+      // Set up a 5-second interval to send movement updates
       const interval = setInterval(() => {
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -74,14 +70,14 @@ const TrackMovement = ({ addLocation }) => {
               lng: longitude,
               timestamp: new Date(),
             };
-            saveLocation(locationData);  // Save the location to the backend every 5 seconds
+            saveMovement(locationData);  // Save the movement data to the backend every 5 seconds
           },
           (geoError) => {
             handleError(`Geolocation error: ${geoError.message}`);
           },
           { enableHighAccuracy: true }
         );
-      }, 5000);  // Save location every 5 seconds
+      }, 5000);  // Save movement data every 5 seconds
       setIntervalId(interval);
     } else {
       setError('Geolocation is not supported by this browser.');

@@ -81,10 +81,13 @@ const fetchLocations = async () => {
 
 // Add new marker when a new location is passed in
 useEffect(() => {
-  if (newLocation && newLocation._id) {
-    setMarkers((prevMarkers) => [...prevMarkers, newLocation]);  // Add the new location dynamically
-  } else {
-    console.error('New location is missing an _id');
+  if (newLocation) {
+    console.log('New location:', newLocation);  // Check what newLocation contains
+    if (newLocation._id) {
+      setMarkers((prevMarkers) => [...prevMarkers, newLocation]);  // Add the new location dynamically
+    } else {
+      console.error('New location is missing an _id');
+    }
   }
 }, [newLocation]);
 

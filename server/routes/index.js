@@ -6,12 +6,14 @@ const router = express.Router();
 const authRoutes = require('./api/auth');
 const locationRoutes = require('./api/location');
 const sessionRoutes = require('./api/session');
+const movementRoutes = require('./api/movement');
 const userRoutes = require('./api/users');
 
 // Use the routes
 router.use('/auth', authRoutes);
 router.use('/location', locationRoutes);
-router.use('/session', sessionRoutes); 
+router.use('/session', sessionRoutes);
+router.use('/movement', movementRoutes);
 router.use('/users', userRoutes);
 
 module.exports = router;

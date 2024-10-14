@@ -2,6 +2,7 @@ const User = require('../models/User'); // Import User model
 const Location = require('../models/Location'); // Import Location model
 const { v4: uuidv4 } = require('uuid');  // Import uuid for session IDs
 const moment = require('moment-timezone');  // Import moment for time formatting
+const mongoose = require('mongoose');
 
 // Controller to save movement during tracking
 const saveLocation = async (req, res) => {
@@ -24,7 +25,17 @@ const saveLocation = async (req, res) => {
 
     const savedLocation = await location.save();
 
-    res.status(201).json({ message: 'Location saved successfully', location: savedLocation });
+    // Add the location to the user's static locations array
+    user.locations.push({
+      lat: savedLocation.lat,
+      lng: savedLocation.lng,
+      formattedTimestamp: savedLocation.formattedTimestamp,
+      notes: savedLocation.notes,
+    });
+
+    await user.save();  // Save the user with the updated locations array
+
+    res.status(201).json(savedLocation);  // Send back the saved location with _id
   } catch (error) {
     console.error('Error saving location:', error);
     res.status(500).json({ message: 'Server error' });
@@ -133,36 +144,42 @@ const saveMovement = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Prepare the location data from the request
     const locationData = {
       lat: req.body.lat,
       lng: req.body.lng,
       timestamp: new Date(),
       formattedTimestamp: moment().tz('America/Los_Angeles').format('MM/DD/YYYY HH:mm'),
-      notes: req.body.notes || '',  // Ensure notes are captured
+      notes: req.body.notes || '',
+      _id: new mongoose.Types.ObjectId(),  // Explicitly assign an _id to the movement
     };
 
-    // Append the location to the movement history (in sessions or a separate collection)
+    let updatedSession;
+
+    // Add movement to the current session or create a new session
     if (user.sessions && user.sessions.length > 0) {
-      // Append to the latest session's movement history
-      const currentSession = user.sessions[user.sessions.length - 1];
-      currentSession.movements.push(locationData);
+      updatedSession = user.sessions[user.sessions.length - 1];  // Get the latest session
+      updatedSession.movements.push(locationData);  // Add the new movement
     } else {
-      // Create a new session if no active session exists
       const newSession = {
         sessionId: uuidv4(),
         startTime: moment().tz('America/Los_Angeles').format('MM/DD/YYYY HH:mm'),
-        movements: [locationData],  // Add the first movement
+        movements: [locationData],
       };
       user.sessions.push(newSession);
+      updatedSession = newSession;  // Set this as the updated session
     }
 
-    await user.save();  // Save the user with the updated sessions
+    // Use findOneAndUpdate to prevent version conflicts
+    await User.findOneAndUpdate(
+      { _id: req.user.id },  // Find the user by their ID
+      { $set: { sessions: user.sessions } },  // Set the updated sessions array
+      { new: true, runValidators: true }  // Return the updated document
+    );
 
-    res.status(201).json({ message: 'Movement saved successfully' });
+    res.status(201).json(locationData);  // Respond with the saved movement data
   } catch (error) {
-    console.error('Error saving movement:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error saving movement:', error);  // Log the full error
+    res.status(500).json({ message: 'Server error', error: error.message });  // Respond with the error details
   }
 };
 
