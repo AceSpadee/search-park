@@ -167,7 +167,11 @@ const MapComponent = ({ newLocation, path }) => {  // Add `path` as a prop
             draggable={true}  // Make the marker draggable
             eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}  // Handle drag end event
           >
-            <Popup>{location.notes || 'No notes for this location'}</Popup>
+            <Popup>
+              {location.notes || 'No notes for this location'}
+              <br />
+              <button onClick={() => handleDeleteMarker(index)}>Delete Marker</button>
+            </Popup>
           </Marker>
         ))}
 

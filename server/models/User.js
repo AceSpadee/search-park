@@ -18,6 +18,9 @@ const userLocationSchema = new mongoose.Schema({
     type: String,
     required: false,  // Optional field for location notes
   },
+  _id: {
+    type: mongoose.Schema.Types.ObjectId, auto: true  // Add _id to ensure consistent identification
+  },
 });
 
 // Schema for individual movement points

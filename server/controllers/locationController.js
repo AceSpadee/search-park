@@ -29,8 +29,9 @@ const saveLocation = async (req, res) => {
     user.locations.push({
       lat: savedLocation.lat,
       lng: savedLocation.lng,
-      formattedTimestamp: savedLocation.formattedTimestamp,
+      formattedTimestamp: moment(savedLocation.timestamp).tz('America/Los_Angeles').format('MM/DD/YYYY HH:mm'),
       notes: savedLocation.notes,
+      _id: savedLocation._id,  // Ensure the ID is saved in user's locations array
     });
 
     await user.save();  // Save the user with the updated locations array
@@ -38,7 +39,7 @@ const saveLocation = async (req, res) => {
     res.status(201).json(savedLocation);  // Send back the saved location with _id
   } catch (error) {
     console.error('Error saving location:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -81,28 +82,34 @@ const updateLocation = async (req, res) => {
   }
 };
 
-// Controller to delete a location by lat/lng
+// Controller to delete a location by ID
 const deleteLocation = async (req, res) => {
   try {
-    const { locationId } = req.body; // Get locationId from the request body
+    const { locationId } = req.body;  // Get locationId from the request body
 
-    // Find the location by its _id and delete it
+    // Delete the location from the Location collection
     const deletedLocation = await Location.findByIdAndDelete(locationId);
 
     if (!deletedLocation) {
       return res.status(404).json({ message: 'Location not found' });
     }
 
-    // Remove the location from the User's locations array using the location's _id
+    // Remove the location from the User's locations array by its _id
     await User.updateMany(
       { 'locations._id': locationId },  // Match the location's _id in the user's locations array
-      { $pull: { locations: { _id: locationId } } }  // Pull the matching location from locations array
+      { $pull: { locations: { _id: locationId } } }  // Pull the matching location from the locations array
     );
 
-    res.json({ message: 'Location deleted successfully' });
+    // Remove the location from any sessions in the User's sessions array
+    await User.updateMany(
+      { 'sessions.movements._id': locationId },  // Match the location in the session movements array
+      { $pull: { 'sessions.$[].movements': { _id: locationId } } }  // Pull the location from the session movements
+    );
+
+    res.json({ message: 'Location and associated user references deleted successfully' });
   } catch (error) {
     console.error('Error deleting location:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -153,12 +160,16 @@ const saveMovement = async (req, res) => {
       _id: new mongoose.Types.ObjectId(),  // Explicitly assign an _id to the movement
     };
 
-    let updatedSession;
-
     // Add movement to the current session or create a new session
+    let updatedSession;
     if (user.sessions && user.sessions.length > 0) {
-      updatedSession = user.sessions[user.sessions.length - 1];  // Get the latest session
-      updatedSession.movements.push(locationData);  // Add the new movement
+      // Use MongoDB's $push to avoid version conflicts
+      await User.findOneAndUpdate(
+        { _id: req.user.id, 'sessions.sessionId': user.sessions[user.sessions.length - 1].sessionId },
+        { $push: { 'sessions.$.movements': locationData } },  // Push to the movements array
+        { new: true }
+      );
+      updatedSession = user.sessions[user.sessions.length - 1];
     } else {
       const newSession = {
         sessionId: uuidv4(),
@@ -166,20 +177,14 @@ const saveMovement = async (req, res) => {
         movements: [locationData],
       };
       user.sessions.push(newSession);
-      updatedSession = newSession;  // Set this as the updated session
+      await user.save();  // Save the new session
+      updatedSession = newSession;
     }
-
-    // Use findOneAndUpdate to prevent version conflicts
-    await User.findOneAndUpdate(
-      { _id: req.user.id },  // Find the user by their ID
-      { $set: { sessions: user.sessions } },  // Set the updated sessions array
-      { new: true, runValidators: true }  // Return the updated document
-    );
 
     res.status(201).json(locationData);  // Respond with the saved movement data
   } catch (error) {
-    console.error('Error saving movement:', error);  // Log the full error
-    res.status(500).json({ message: 'Server error', error: error.message });  // Respond with the error details
+    console.error('Error saving movement:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
