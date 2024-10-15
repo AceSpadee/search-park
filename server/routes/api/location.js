@@ -11,7 +11,7 @@ router.post('/', auth, saveLocation);
 router.get('/', auth, getLocations);
 
 // Define the route to update a location
-router.put('/', auth, updateLocation);
+router.put('/:id', auth, updateLocation);
 
 // Define the route to delete a location
 router.delete('/', auth, deleteLocation); 

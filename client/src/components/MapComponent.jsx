@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
@@ -19,7 +19,7 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const MapComponent = ({ newLocation }) => {
+const MapComponent = ({ newLocation, path }) => {  // Add `path` as a prop
   const [markers, setMarkers] = useState([]);  // Initialize markers as an empty array
   const [error, setError] = useState(null);  // State to track errors
 
@@ -61,7 +61,14 @@ const MapComponent = ({ newLocation }) => {
       const response = await axios.get(`${apiUrl}/api/location`, {
         headers: { 'x-auth-token': token },
       });
-      setMarkers(response.data);  // Set the fetched locations as markers
+
+      // Ensure the fetched locations include _id
+      const fetchedLocations = response.data.map((location) => ({
+        ...location,
+        _id: location._id || 'missing-id',  // Fallback if somehow _id is missing
+      }));
+
+      setMarkers(fetchedLocations);  // Set the fetched locations as markers
     } catch (error) {
       handleError(error);
     }
@@ -70,12 +77,12 @@ const MapComponent = ({ newLocation }) => {
   // Fetch locations when the component mounts
   useEffect(() => {
     fetchLocations();
-  }, [apiUrl]);
+  }, []);  // Only run on initial render
 
   // Add new marker when a new location is passed in
   useEffect(() => {
-    if (newLocation) {
-      setMarkers((prevMarkers) => [...prevMarkers, newLocation]);  // Add the new location dynamically
+    if (newLocation && newLocation._id) {
+      setMarkers((prevMarkers) => [...prevMarkers, newLocation]);  // Add the new location as a marker
     }
   }, [newLocation]);
 
@@ -83,9 +90,13 @@ const MapComponent = ({ newLocation }) => {
   const handleMarkerDragEnd = async (event, index) => {
     const newPosition = event.target.getLatLng();  // Get new marker position
     const token = getToken();  // Get JWT token from localStorage
-  
-    const originalLat = markers[index].lat;
-    const originalLng = markers[index].lng;
+    
+    const locationId = markers[index]._id;  // Get the location's _id from markers
+    
+    if (!locationId) {
+      setError('Unable to update location: locationId is missing.');
+      return;
+    }
   
     // Update the marker's position in the state
     setMarkers((prevMarkers) => {
@@ -94,16 +105,14 @@ const MapComponent = ({ newLocation }) => {
       return updatedMarkers;
     });
   
-    // Send the updated coordinates to the backend
+    // Send the updated coordinates to the backend, include the location ID in the URL
     try {
-      await axios.put(`${apiUrl}/api/location`, 
+      await axios.put(`${apiUrl}/api/location/${locationId}`,  // Use locationId in the URL
         {
-          originalLat,  // Send original lat
-          originalLng,  // Send original lng
           newLat: newPosition.lat, 
           newLng: newPosition.lng 
         },
-        { headers: { 'x-auth-token': token } }  // Send token in headers for authentication
+        { headers: { 'x-auth-token': token } }
       );
       console.log(`Location updated successfully to: `, newPosition);
     } catch (error) {
@@ -150,21 +159,24 @@ const MapComponent = ({ newLocation }) => {
           opacity={0.4}
         />
 
-        {/* Render markers */}
+        {/* Display markers */}
         {markers.map((location, index) => (
           <Marker
             key={index}
             position={[location.lat, location.lng]}
-            draggable={true}
-            eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}
+            draggable={true}  // Make the marker draggable
+            eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}  // Handle drag end event
           >
             <Popup>
-              <h4>Location Note</h4>
               {location.notes || 'No notes for this location'}
+              <br />
               <button onClick={() => handleDeleteMarker(index)}>Delete Marker</button>
             </Popup>
           </Marker>
         ))}
+
+        {/* Draw path with polyline */}
+        {path && path.length > 1 && <Polyline positions={path} color="blue" />}
       </MapContainer>
     </div>
   );

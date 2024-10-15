@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import TrackLocation from '../components/TrackLocation';
+import TrackMovement from '../components/TrackMovement';
 import MapComponent from '../components/MapComponent';
 
 const LocationApp = () => {
@@ -55,8 +56,13 @@ const LocationApp = () => {
 
   // Function to add a new location to the state
   const addLocation = (newLocation) => {
-    setLocations((prevLocations) => [...prevLocations, newLocation]);  // Add the new location to the array
-    setNewLocation(newLocation);  // Track the latest added location
+    const locationData = newLocation.location ? newLocation.location : newLocation;  // Check if the location is wrapped
+    if (!locationData._id) {
+      console.error('New location is missing an _id');
+    } else {
+      setLocations((prevLocations) => [...prevLocations, locationData]);  // Add the new location to the array
+      setNewLocation(locationData);  // Track the latest added location
+    }
   };
 
   // Fetch locations when the component mounts
@@ -70,6 +76,8 @@ const LocationApp = () => {
 
       {/* Pass the addLocation function to TrackLocation so it can update the map */}
       <TrackLocation addLocation={addLocation} />
+
+      <TrackMovement addLocation={addLocation} />
 
       {/* Pass the locations to MapComponent to display them */}
       <MapComponent locations={locations} newLocation={newLocation} />
