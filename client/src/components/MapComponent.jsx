@@ -19,8 +19,9 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const MapComponent = ({ newLocation, path }) => {
+const MapComponent = ({ newLocation }) => {
   const [markers, setMarkers] = useState([]); // Initialize markers as an empty array
+  const [path, setPath] = useState([]); // Initialize path state
   const [error, setError] = useState(null); // State to track errors
 
   // Dynamically determine the backend URL based on environment
@@ -50,31 +51,34 @@ const MapComponent = ({ newLocation, path }) => {
   };
 
   // Function to fetch saved locations and movements from the server
-  const fetchLocations = async () => {
-    const token = getToken(); // Get JWT token from localStorage
-    if (!token) {
-      setError('User not logged in. Please log in to see your locations.');
-      return;
-    }
-  
-    try {
-      // Fetch saved locations
-      const locationResponse = await axios.get(`${apiUrl}/api/location`, {
-        headers: { 'x-auth-token': token },
-      });
-  
-      // Fetch saved movements
-      const movementResponse = await axios.get(`${apiUrl}/api/movement`, {
-        headers: { 'x-auth-token': token },
-      });
-  
-      // Update the state with fetched locations and movements
-      setMarkers([...locationResponse.data, ...movementResponse.data]);
-    } catch (error) {
-      console.error('Error fetching locations:', error);
-      setError('Failed to fetch locations');
-    }
-  };
+const fetchLocations = async () => {
+  const token = getToken(); // Get JWT token from localStorage
+  if (!token) {
+    setError('User not logged in. Please log in to see your locations.');
+    return;
+  }
+
+  try {
+    // Fetch saved locations
+    const locationResponse = await axios.get(`${apiUrl}/api/location`, {
+      headers: { 'x-auth-token': token },
+    });
+
+    // Fetch saved movements
+    const movementResponse = await axios.get(`${apiUrl}/api/movement`, {
+      headers: { 'x-auth-token': token },
+    });
+
+    // Update the state with fetched locations and movements
+    setMarkers([...locationResponse.data, ...movementResponse.data]);
+
+    // Extract the path from movements
+    const pathCoordinates = movementResponse.data.map(movement => [movement.lat, movement.lng]);
+    setPath(pathCoordinates); // Update the path state
+  } catch (error) {
+    handleError(error); // Use handleError function
+  }
+};
 
   // Fetch locations when the component mounts
   useEffect(() => {
