@@ -145,43 +145,55 @@ const startNewSession = async (req, res) => {
 // Controller to save movement during tracking
 const saveMovement = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-
+    // Use the user document from middleware if available
+    const user = req.userDocument || await User.findById(req.user.id);
+    
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const locationData = {
+    // Create the location data using the Location model
+    const locationData = new Location({
       lat: req.body.lat,
       lng: req.body.lng,
-      timestamp: new Date(),
-      formattedTimestamp: moment().tz('America/Los_Angeles').format('MM/DD/YYYY HH:mm'),
       notes: req.body.notes || '',
-      _id: new mongoose.Types.ObjectId(),  // Explicitly assign an _id to the movement
-    };
+      user: user._id,
+      userFullName: user.fullName,
+    });
 
-    // Add movement to the current session or create a new session
-    let updatedSession;
-    if (user.sessions && user.sessions.length > 0) {
-      // Use MongoDB's $push to avoid version conflicts
-      await User.findOneAndUpdate(
-        { _id: req.user.id, 'sessions.sessionId': user.sessions[user.sessions.length - 1].sessionId },
-        { $push: { 'sessions.$.movements': locationData } },  // Push to the movements array
-        { new: true }
-      );
-      updatedSession = user.sessions[user.sessions.length - 1];
-    } else {
-      const newSession = {
-        sessionId: uuidv4(),
-        startTime: moment().tz('America/Los_Angeles').format('MM/DD/YYYY HH:mm'),
-        movements: [locationData],
-      };
-      user.sessions.push(newSession);
-      await user.save();  // Save the new session
-      updatedSession = newSession;
+    // Using a transaction to ensure consistency
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    
+    try {
+      // Save the location data
+      await locationData.save();
+
+      // Add to the latest session or create a new one
+      if (user.sessions && user.sessions.length > 0) {
+        await User.findOneAndUpdate(
+          { _id: req.user.id, 'sessions.sessionId': user.sessions[user.sessions.length - 1].sessionId },
+          { $push: { 'sessions.$.movements': locationData } },
+          { new: true }
+        );
+      } else {
+        const newSession = {
+          sessionId: uuidv4(),
+          startTime: moment().tz('America/Los_Angeles').format('MM/DD/YYYY HH:mm'),
+          movements: [locationData],
+        };
+        user.sessions.push(newSession);
+        await user.save();
+      }
+
+      await session.commitTransaction();
+      res.status(201).json(locationData);
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
     }
-
-    res.status(201).json(locationData);  // Respond with the saved movement data
   } catch (error) {
     console.error('Error saving movement:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -218,6 +230,27 @@ const stopSession = async (req, res) => {
   }
 };
 
+// Controller to get all movements for the authenticated user
+const getMovements = async (req, res) => {
+  try {
+    // Find the user by their ID
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Extract all movements from the user's sessions
+    const movements = user.sessions.flatMap(session => session.movements);
+
+    // Respond with the retrieved movements
+    res.status(200).json(movements);
+  } catch (error) {
+    console.error('Error fetching movements:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Export the controller functions so they can be used in routes
 module.exports = {
   saveLocation,
@@ -227,4 +260,5 @@ module.exports = {
   startNewSession,
   saveMovement,
   stopSession,
+  getMovements,
 };

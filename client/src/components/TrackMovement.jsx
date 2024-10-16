@@ -31,15 +31,12 @@ const TrackMovement = ({ addLocation }) => {
         return;
       }
 
-      console.log('Saving movement:', locationData);  // Log the location data
-
       const response = await axios.post(`${apiUrl}/api/movement`, locationData, {
         headers: { 'x-auth-token': token },
       });
 
-      addLocation(response.data);  // Add the new movement to the map
-      setPathState((prevPath) => [...prevPath, [locationData.lat, locationData.lng]]);  // Update the local path state
-
+      addLocation(response.data);
+      setPathState((prevPath) => [...prevPath, [locationData.lat, locationData.lng]]);
     } catch (error) {
       console.error('Error saving movement:', error);
       setError('Failed to save movement');
@@ -48,7 +45,7 @@ const TrackMovement = ({ addLocation }) => {
 
   // Function to start tracking the user's movement
   const startTracking = () => {
-    setError(null);  // Clear previous errors
+    setError(null);
 
     if (navigator.geolocation) {
       const id = navigator.geolocation.watchPosition(
@@ -60,8 +57,6 @@ const TrackMovement = ({ addLocation }) => {
             timestamp: new Date(),
           };
 
-          console.log('New location:', locationData);  // Log the location data for debugging
-
           // Save the movement and update the path
           saveMovement(locationData);
 
@@ -69,11 +64,11 @@ const TrackMovement = ({ addLocation }) => {
           setLastLocation(`Lat: ${latitude}, Lng: ${longitude}`);
         },
         (geoError) => {
-          handleError(`Geolocation error: ${geoError.message}`);
+          handleError(new Error(`Geolocation error: ${geoError.message}`));
         },
         { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
       );
-      setWatchId(id);  // Store the watch ID to stop tracking later
+      setWatchId(id);
     } else {
       setError('Geolocation is not supported by this browser.');
     }
@@ -82,8 +77,9 @@ const TrackMovement = ({ addLocation }) => {
   // Function to stop tracking the user's movement
   const stopTracking = () => {
     if (watchId) {
-      navigator.geolocation.clearWatch(watchId);  // Clear the geolocation watch
-      setWatchId(null);  // Reset the watchId
+      navigator.geolocation.clearWatch(watchId);
+      setWatchId(null);
+      setError('Tracking stopped.');
     }
   };
 

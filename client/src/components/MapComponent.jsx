@@ -2,7 +2,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';  // Import Leaflet to set marker icon
+import L from 'leaflet'; // Import Leaflet to set marker icon
 
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -19,9 +19,9 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const MapComponent = ({ newLocation, path }) => {  // Add `path` as a prop
-  const [markers, setMarkers] = useState([]);  // Initialize markers as an empty array
-  const [error, setError] = useState(null);  // State to track errors
+const MapComponent = ({ newLocation, path }) => {
+  const [markers, setMarkers] = useState([]); // Initialize markers as an empty array
+  const [error, setError] = useState(null); // State to track errors
 
   // Dynamically determine the backend URL based on environment
   const apiUrl = import.meta.env.MODE === 'production' 
@@ -49,71 +49,72 @@ const MapComponent = ({ newLocation, path }) => {  // Add `path` as a prop
     console.error('Error fetching locations:', error);
   };
 
-  // Fetch locations from the backend when the component loads
+  // Function to fetch saved locations and movements from the server
   const fetchLocations = async () => {
-    const token = getToken();  // Get JWT token from localStorage
+    const token = getToken(); // Get JWT token from localStorage
     if (!token) {
-      setError('User not logged in. Please log in to view locations.');
+      setError('User not logged in. Please log in to see your locations.');
       return;
     }
-
+  
     try {
-      const response = await axios.get(`${apiUrl}/api/location`, {
+      // Fetch saved locations
+      const locationResponse = await axios.get(`${apiUrl}/api/location`, {
         headers: { 'x-auth-token': token },
       });
-
-      // Ensure the fetched locations include _id
-      const fetchedLocations = response.data.map((location) => ({
-        ...location,
-        _id: location._id || 'missing-id',  // Fallback if somehow _id is missing
-      }));
-
-      setMarkers(fetchedLocations);  // Set the fetched locations as markers
+  
+      // Fetch saved movements
+      const movementResponse = await axios.get(`${apiUrl}/api/movement`, {
+        headers: { 'x-auth-token': token },
+      });
+  
+      // Update the state with fetched locations and movements
+      setMarkers([...locationResponse.data, ...movementResponse.data]);
     } catch (error) {
-      handleError(error);
+      console.error('Error fetching locations:', error);
+      setError('Failed to fetch locations');
     }
   };
 
   // Fetch locations when the component mounts
   useEffect(() => {
     fetchLocations();
-  }, []);  // Only run on initial render
+  }, []); // Only run on initial render
 
   // Add new marker when a new location is passed in
   useEffect(() => {
     if (newLocation && newLocation._id) {
-      setMarkers((prevMarkers) => [...prevMarkers, newLocation]);  // Add the new location as a marker
+      setMarkers((prevMarkers) => [...prevMarkers, newLocation]); // Add the new location as a marker
     }
   }, [newLocation]);
 
   // Handle marker drag end event to update the marker's position
   const handleMarkerDragEnd = async (event, index) => {
-    const newPosition = event.target.getLatLng();  // Get new marker position
-    const token = getToken();  // Get JWT token from localStorage
-    
-    const locationId = markers[index]._id;  // Get the location's _id from markers
-    
+    const newPosition = event.target.getLatLng(); // Get new marker position
+    const token = getToken(); // Get JWT token from localStorage
+
+    const locationId = markers[index]._id; // Get the location's _id from markers
+
     if (!locationId) {
       setError('Unable to update location: locationId is missing.');
       return;
     }
-  
+
     // Update the marker's position in the state
     setMarkers((prevMarkers) => {
       const updatedMarkers = [...prevMarkers];
       updatedMarkers[index] = { ...updatedMarkers[index], lat: newPosition.lat, lng: newPosition.lng };
       return updatedMarkers;
     });
-  
-    // Send the updated coordinates to the backend, include the location ID in the URL
+
+    // Send the updated coordinates to the backend
     try {
-      await axios.put(`${apiUrl}/api/location/${locationId}`,  // Use locationId in the URL
-        {
-          newLat: newPosition.lat, 
-          newLng: newPosition.lng 
-        },
-        { headers: { 'x-auth-token': token } }
-      );
+      await axios.put(`${apiUrl}/api/location/${locationId}`, {
+        newLat: newPosition.lat,
+        newLng: newPosition.lng,
+      }, {
+        headers: { 'x-auth-token': token },
+      });
       console.log(`Location updated successfully to: `, newPosition);
     } catch (error) {
       console.error('Error updating location:', error);
@@ -122,16 +123,16 @@ const MapComponent = ({ newLocation, path }) => {  // Add `path` as a prop
   };
 
   const handleDeleteMarker = async (index) => {
-    const token = getToken();  // Get JWT token from localStorage
-    const { _id } = markers[index];  // Get the location's _id
-  
+    const token = getToken(); // Get JWT token from localStorage
+    const { _id } = markers[index]; // Get the location's _id
+
     // Send a DELETE request to the backend to remove the marker
     try {
       await axios.delete(`${apiUrl}/api/location`, {
         headers: { 'x-auth-token': token },
-        data: { locationId: _id }  // Send the location's _id with the correct key
+        data: { locationId: _id }, // Send the location's _id with the correct key
       });
-  
+
       // Remove the marker from the state after successful deletion
       setMarkers((prevMarkers) => prevMarkers.filter((_, i) => i !== index));
       console.log(`Marker with id (${_id}) deleted successfully.`);
@@ -144,7 +145,7 @@ const MapComponent = ({ newLocation, path }) => {  // Add `path` as a prop
   return (
     <div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      
+
       <MapContainer center={[45.6280, -122.6739]} zoom={12} style={{ height: '400px', width: '100%' }}>
         {/* Esri Satellite Imagery as the base layer */}
         <TileLayer
@@ -155,7 +156,7 @@ const MapComponent = ({ newLocation, path }) => {  // Add `path` as a prop
         {/* OpenStreetMap roads and labels as a semi-transparent overlay */}
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors" 
+          attribution="&copy; OpenStreetMap contributors"
           opacity={0.4}
         />
 
@@ -164,8 +165,8 @@ const MapComponent = ({ newLocation, path }) => {  // Add `path` as a prop
           <Marker
             key={index}
             position={[location.lat, location.lng]}
-            draggable={true}  // Make the marker draggable
-            eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}  // Handle drag end event
+            draggable={true} // Make the marker draggable
+            eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }} // Handle drag end event
           >
             <Popup>
               {location.notes || 'No notes for this location'}

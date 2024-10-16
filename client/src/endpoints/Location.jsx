@@ -20,7 +20,6 @@ const LocationApp = () => {
   // Function to handle errors
   const handleError = (error) => {
     if (error.response) {
-      // Server responded with a status code outside of the range of 2xx
       if (error.response.status === 401) {
         setError('Authentication failed. Please log in again.');
       } else if (error.response.status === 500) {
@@ -36,7 +35,7 @@ const LocationApp = () => {
     console.error('Error fetching locations:', error);
   };
 
-  // Function to fetch saved locations from the server
+  // Function to fetch saved locations and movements from the server
   const fetchLocations = async () => {
     const token = getToken();  // Get JWT token from localStorage
     if (!token) {
@@ -45,10 +44,18 @@ const LocationApp = () => {
     }
 
     try {
-      const response = await axios.get(`${apiUrl}/api/location`, {
+      // Fetch saved locations
+      const locationResponse = await axios.get(`${apiUrl}/api/location`, {
         headers: { 'x-auth-token': token },
       });
-      setLocations(response.data);  // Update the state with fetched locations
+
+      // Fetch saved movements
+      const movementResponse = await axios.get(`${apiUrl}/api/movement`, {
+        headers: { 'x-auth-token': token },
+      });
+
+      // Combine the locations and movements and update the state
+      setLocations([...locationResponse.data, ...movementResponse.data]);
     } catch (error) {
       handleError(error);
     }
@@ -56,12 +63,12 @@ const LocationApp = () => {
 
   // Function to add a new location to the state
   const addLocation = (newLocation) => {
-    const locationData = newLocation.location ? newLocation.location : newLocation;  // Check if the location is wrapped
+    const locationData = newLocation.location ? newLocation.location : newLocation;
     if (!locationData._id) {
       console.error('New location is missing an _id');
     } else {
-      setLocations((prevLocations) => [...prevLocations, locationData]);  // Add the new location to the array
-      setNewLocation(locationData);  // Track the latest added location
+      setLocations((prevLocations) => [...prevLocations, locationData]);
+      setNewLocation(locationData);
     }
   };
 
