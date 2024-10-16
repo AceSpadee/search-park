@@ -39,9 +39,12 @@ const TrackLocation = ({ addLocation }) => {
   const saveLocation = async (locationData) => {
     try {
       const token = getToken();
-      const response = await axios.post(`${apiUrl}/api/location`, locationData, {
+      const url = `${apiUrl}/api/location`; // Use the `/api/location` endpoint for saving a static location
+
+      const response = await axios.post(url, locationData, {
         headers: { 'x-auth-token': token },
       });
+
       addLocation(response.data);  // Add to map
       setLocation(locationData);   // Update local state with saved location
     } catch (error) {

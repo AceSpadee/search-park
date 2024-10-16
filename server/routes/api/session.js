@@ -1,16 +1,24 @@
 // routes/api/session.js
 const express = require('express');
-const { startNewSession, saveMovement, stopSession } = require('../../controllers/locationController');
+const {
+  startNewSession,
+  saveMovement,
+  stopSession,
+  getMovements,
+} = require('../../controllers/sessionController'); // Import from sessionController
 const auth = require('../../utils/auth');
 const router = express.Router();
 
-// POST request to start a new session (when Start Tracking is clicked)
+// Start a new session
 router.post('/start', auth, startNewSession);
 
-// POST request to save movement during a session
-router.post('/movement', auth, saveMovement);
+// Save a movement for a specific session
+router.post('/:sessionId/movement', auth, saveMovement);
 
-// POST request to stop a session (when Stop Tracking is clicked)
-router.post('/stop', auth, stopSession);
+// Stop a session
+router.put('/:sessionId/stop', auth, stopSession);
+
+// Get all sessions or movements for a specific session
+router.get('/:sessionId?', auth, getMovements);
 
 module.exports = router;
