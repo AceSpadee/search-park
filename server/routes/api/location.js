@@ -4,16 +4,10 @@ const { saveLocation, getLocations, updateLocation, deleteLocation } = require('
 const auth = require('../../utils/auth');
 const router = express.Router();
 
-// POST request to save a new location
+// Define the routes with callback functions
 router.post('/', auth, saveLocation);
-
-// GET request to fetch all locations for the user
 router.get('/', auth, getLocations);
-
-// Define the route to update a location
 router.put('/:id', auth, updateLocation);
-
-// Define the route to delete a location
-router.delete('/', auth, deleteLocation); 
+router.delete('/:id', auth, deleteLocation);
 
 module.exports = router;

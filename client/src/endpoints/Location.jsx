@@ -5,9 +5,11 @@ import TrackMovement from '../components/TrackMovement';
 import MapComponent from '../components/MapComponent';
 
 const LocationApp = () => {
-  const [locations, setLocations] = useState([]);  // Store user's locations
-  const [newLocation, setNewLocation] = useState(null);  // Track the newly added location
-  const [error, setError] = useState(null);  // Track any errors
+  const [locations, setLocations] = useState([]); // Store user's locations
+  const [newLocation, setNewLocation] = useState(null); // Track the newly added location
+  const [error, setError] = useState(null); // Track any errors
+  const [path, setPath] = useState([]); // Track the path for movements
+  const [loading, setLoading] = useState(true);
 
   // Dynamically determine the backend URL based on environment
   const apiUrl = import.meta.env.MODE === 'production' 
@@ -20,7 +22,6 @@ const LocationApp = () => {
   // Function to handle errors
   const handleError = (error) => {
     if (error.response) {
-      // Server responded with a status code outside of the range of 2xx
       if (error.response.status === 401) {
         setError('Authentication failed. Please log in again.');
       } else if (error.response.status === 500) {
@@ -36,39 +37,91 @@ const LocationApp = () => {
     console.error('Error fetching locations:', error);
   };
 
-  // Function to fetch saved locations from the server
+  // Function to fetch saved locations
   const fetchLocations = async () => {
-    const token = getToken();  // Get JWT token from localStorage
+    const token = getToken();
     if (!token) {
       setError('User not logged in. Please log in to see your locations.');
+      setLoading(false);
       return;
     }
-
+  
     try {
-      const response = await axios.get(`${apiUrl}/api/location`, {
+      const locationResponse = await axios.get(`${apiUrl}/api/location`, {
         headers: { 'x-auth-token': token },
       });
-      setLocations(response.data);  // Update the state with fetched locations
+  
+      // Safely check if response data is an array
+      const locationsData = Array.isArray(locationResponse.data) ? locationResponse.data : [];
+      setLocations(locationsData);
+      setError(null); // Clear any previous errors if successful
     } catch (error) {
       handleError(error);
     }
   };
 
-  // Function to add a new location to the state
-  const addLocation = (newLocation) => {
-    const locationData = newLocation.location ? newLocation.location : newLocation;  // Check if the location is wrapped
-    if (!locationData._id) {
-      console.error('New location is missing an _id');
-    } else {
-      setLocations((prevLocations) => [...prevLocations, locationData]);  // Add the new location to the array
-      setNewLocation(locationData);  // Track the latest added location
+  // Function to fetch saved sessions and movements
+  const fetchSessions = async () => {
+    const token = getToken();
+    if (!token) {
+      setError('User not logged in. Please log in to see your movements.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${apiUrl}/api/session`, {
+        headers: { 'x-auth-token': token },
+      });
+
+      // Safely check if response data is an array
+      const sessionsData = Array.isArray(response.data) ? response.data : [];
+      const pathCoordinates = sessionsData.flatMap(session =>
+        Array.isArray(session.movements) ? session.movements.map(movement => [movement.lat, movement.lng]) : []
+      );
+      setPath(pathCoordinates);
+      setError(null); // Clear any previous errors if successful
+    } catch (error) {
+      handleError(error);
     }
   };
 
-  // Fetch locations when the component mounts
+  // Function to fetch both locations and sessions
+  const fetchLocationsAndSessions = async () => {
+    setLoading(true);
+    await fetchLocations();
+    await fetchSessions();
+    setLoading(false);
+  };
+
+  // Function to add a new location to the state
+  const addLocation = (newLocation) => {
+    const locationData = newLocation.location ? newLocation.location : newLocation;
+    if (!locationData._id) {
+      setError('Failed to add location: Missing location ID.');
+    } else {
+      // Check if the location already exists
+      if (!locations.some(loc => loc._id === locationData._id)) {
+        setLocations(prevLocations => [...prevLocations, locationData]);
+        setNewLocation(locationData);
+      }
+    }
+  };
+
+  // Fetch locations and sessions when the component mounts
   useEffect(() => {
-    fetchLocations();
-  }, []);  // Only run on initial render
+    fetchLocationsAndSessions();
+  }, []);
+
+  // Update locations dynamically when a new location is added
+  useEffect(() => {
+    if (newLocation) {
+      // Avoid duplicates
+      if (!locations.some(loc => loc._id === newLocation._id)) {
+        setLocations(prevLocations => [...prevLocations, newLocation]);
+      }
+    }
+  }, [newLocation]);
 
   return (
     <div>
@@ -79,11 +132,14 @@ const LocationApp = () => {
 
       <TrackMovement addLocation={addLocation} />
 
-      {/* Pass the locations to MapComponent to display them */}
-      <MapComponent locations={locations} newLocation={newLocation} />
+      {/* Display loading indicator */}
+      {loading && <p>Loading map data...</p>}
 
       {/* Display any error messages */}
       {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {/* Pass the locations and path to MapComponent to display them */}
+      <MapComponent locations={locations} newLocation={newLocation} path={path} />
     </div>
   );
 };

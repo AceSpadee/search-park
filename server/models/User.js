@@ -1,63 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
-// Define the schema for storing individual locations
-const userLocationSchema = new mongoose.Schema({
-  lat: {
-    type: Number,
-    required: true,
-  },
-  lng: {
-    type: Number,
-    required: true,
-  },
-  formattedTimestamp: {
-    type: String,  // Store the formatted timestamp for each location
-  },
-  notes: {
-    type: String,
-    required: false,  // Optional field for location notes
-  },
-  _id: {
-    type: mongoose.Schema.Types.ObjectId, auto: true  // Add _id to ensure consistent identification
-  },
-});
-
-// Schema for individual movement points
-const movementSchema = new mongoose.Schema({
-  lat: {
-    type: Number,
-    required: true,
-  },
-  lng: {
-    type: Number,
-    required: true,
-  },
-  timestamp: {
-    type: String,  // Store the formatted timestamp for each movement point
-  },
-  _id: { 
-    type: mongoose.Schema.Types.ObjectId, auto: true // Ensure an _id is generated
-  },
-});
-
-// Schema for grouping movements into sessions
-const sessionSchema = new mongoose.Schema({
-  sessionId: {
-    type: String,
-    required: true,
-    unique: true,  // Ensure sessionId is unique for each session
-  },
-  startTime: {
-    type: String,  // The start time of the session
-    required: true,
-  },
-  endTime: {
-    type: String,  // The end time of the session (optional, set when tracking stops)
-  },
-  movements: [movementSchema],  // Array of movement points during the session
-});
-
 // Main User Schema
 const userSchema = new mongoose.Schema({
   firstName: {
@@ -77,11 +20,18 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  locations: {
-    type: [userLocationSchema],  // This ensures locations is always initialized as an array
-    default: [],  // Automatically set to an empty array if not provided
-  },
-  sessions: [sessionSchema],  // Array to store session data if applicable
+  locations: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Location', // Reference to the Location model
+    }
+  ],
+  sessions: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Session', // Reference to the Session model
+    }
+  ],
 });
 
 // Pre-save hook to hash the password before saving
