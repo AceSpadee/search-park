@@ -59,34 +59,40 @@ const MapComponent = ({ newLocation }) => {
     }
   
     try {
-      // Fetch saved locations
+      // Fetch saved locations (from TrackLocation functionality)
       const locationResponse = await axios.get(`${apiUrl}/api/location`, {
         headers: { 'x-auth-token': token },
       });
   
-      // Fetch sessions to get movements
+      // Fetch session movements (from TrackMovement functionality)
       const sessionResponse = await axios.get(`${apiUrl}/api/session`, {
         headers: { 'x-auth-token': token },
       });
   
+      // Log the session data to ensure it's coming through properly
+      console.log('Session data:', sessionResponse.data);
+  
       const locationsData = Array.isArray(locationResponse.data) ? locationResponse.data : [];
       const sessionsData = Array.isArray(sessionResponse.data) ? sessionResponse.data : [];
   
-      // Filter out sessions without movements
-      const sessionMarkers = sessionsData
-        .filter(session => session.movements && session.movements.length > 0)
-        .flatMap(session => session.movements.map(movement => ({
-          lat: movement.lat,
-          lng: movement.lng,
-          notes: movement.notes || 'Session movement',
-          _id: movement._id || `session-${session.sessionId}-${movement.timestamp}`,
-        })));
+      // Process session data directly (since session data is already an array of movements)
+      const sessionMarkers = sessionsData.map(movement => ({
+        lat: movement.lat,
+        lng: movement.lng,
+        notes: movement.notes || 'Session movement',
+        _id: movement._id || `session-${movement.timestamp}`,
+      }));
   
+      console.log('Session Markers:', sessionMarkers); // Log to ensure movements are processed
+  
+      // Combine both location markers (from TrackLocation) and session movement markers (from TrackMovement)
       const combinedMarkers = [...locationsData, ...sessionMarkers];
-      setMarkers(combinedMarkers);
+      setMarkers(combinedMarkers); // Set markers to display both saved locations and movements
   
+      // Create path coordinates from sessionMarkers to draw polyline for session movements
       const pathCoordinates = sessionMarkers.map(marker => [marker.lat, marker.lng]);
-      setPath(pathCoordinates);
+      setPath(pathCoordinates);  // Set the polyline path for movements
+  
     } catch (error) {
       handleError(error);
     }
@@ -96,6 +102,16 @@ const MapComponent = ({ newLocation }) => {
   useEffect(() => {
     fetchLocationsAndSessions();
   }, []); // Only run on initial render
+
+  // Log markers state after they are set
+  useEffect(() => {
+    console.log('Markers state:', markers); // Check if the markers state is correctly populated
+  }, [markers]);
+
+  // Log path state after it is set
+  useEffect(() => {
+    console.log('Path state:', path); // Check if the path state is correctly populated
+  }, [path]);
 
   // Add new marker when a new location is passed in
   useEffect(() => {
@@ -157,45 +173,44 @@ const MapComponent = ({ newLocation }) => {
   };
 
   return (
-    <div>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <MapContainer center={[45.6280, -122.6739]} zoom={12} style={{ height: '400px', width: '100%' }}>
+      <TileLayer
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+        attribution="Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA"
+      />
+      
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution="&copy; OpenStreetMap contributors"
+        opacity={0.4}
+      />
   
-      <MapContainer center={[45.6280, -122.6739]} zoom={12} style={{ height: '400px', width: '100%' }}>
-        <TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          attribution="Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA"
-        />
+      {/* Display markers for saved locations and movements */}
+      {Array.isArray(markers) && markers.length > 0 && markers.map((marker, index) => (
+        <Marker
+          key={marker._id || index}
+          position={[marker.lat, marker.lng]}
+          draggable={true}
+          eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}
+        >
+          <Popup>
+            {marker.notes || 'No notes for this location'}
+            <br />
+            <button onClick={() => handleDeleteMarker(index)}>Delete Marker</button>
+          </Popup>
+        </Marker>
+      ))}
   
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-          opacity={0.4}
-        />
+      {/* Display a polyline for the path movements */}
+      {Array.isArray(path) && path.length > 1 && <Polyline positions={path} color="blue" />}
   
-        {/* Display markers if markers is an array */}
-        {Array.isArray(markers) && markers.length > 0 ? (
-          markers.map((location, index) => (
-            <Marker
-              key={location._id || index}
-              position={[location.lat, location.lng]}
-              draggable={true}
-              eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}
-            >
-              <Popup>
-                {location.notes || 'No notes for this location'}
-                <br />
-                <button onClick={() => handleDeleteMarker(index)}>Delete Marker</button>
-              </Popup>
-            </Marker>
-          ))
-        ) : (
-          <p>No markers to display</p>
-        )}
-  
-        {/* Draw path with polyline if path is an array */}
-        {Array.isArray(path) && path.length > 1 && <Polyline positions={path} color="blue" />}
-      </MapContainer>
-    </div>
+      {/* Display markers for each movement point in the path */}
+      {Array.isArray(path) && path.length > 0 && path.map((point, index) => (
+        <Marker key={index} position={point}>
+          <Popup>Movement Point {index + 1}</Popup>
+        </Marker>
+      ))}
+    </MapContainer>
   );
 };
 

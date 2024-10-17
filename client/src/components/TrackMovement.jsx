@@ -111,25 +111,27 @@ const TrackMovement = ({ addLocation }) => {
         setError('User not logged in. Please log in to track your movement.');
         return;
       }
-
+  
       // Make the request to save the movement
       const response = await axios.post(`${apiUrl}/api/session/${activeSessionId}/movement`, locationData, {
         headers: { 'x-auth-token': token },
       });
-
+  
       const movementData = response.data;
-
+  
       if (!movementData._id) {
         setError('Failed to add movement: Missing movement ID.');
         return;
       }
-
-      // Add the new movement to the map and update the state
-      addLocation(movementData);
+  
+      // Add the new movement to the map as a marker
+      addLocation(movementData, true); // Ensure addLocation handles this correctly as a movement marker
+  
+      // Update the path state for the polyline
       setPathState((prevPath) => [...prevPath, [movementData.lat, movementData.lng]]);
     } catch (error) {
       console.error('Error saving movement:', error);
-
+  
       // Handle error correctly
       if (error.response && error.response.status) {
         setError(`Failed to save movement: ${error.response.data.message || 'Unknown error'}`);
