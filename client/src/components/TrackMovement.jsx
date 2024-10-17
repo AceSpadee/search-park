@@ -64,38 +64,73 @@ const TrackMovement = ({ addLocation }) => {
   const startTracking = async () => {
     setError(null);
     setLoading(true);
-
+  
     // Wait for the session to be created if it's not already active
     const activeSessionId = await fetchOrCreateSession();
-
+  
     if (!activeSessionId) {
       setError('Failed to start tracking. No session found.');
       setLoading(false);
       return;
     }
-
+  
     if (navigator.geolocation) {
+      // Start tracking the position
       const id = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
+  
           const locationData = {
             lat: latitude,
             lng: longitude,
             timestamp: new Date(),
           };
-
-          // Save the movement and update the path
+  
+          // Save the initial movement and update the path
           saveMovement(locationData, activeSessionId);
-
+  
           // Update the last known location for visual feedback
           setLastLocation(`Lat: ${latitude}, Lng: ${longitude}`);
+  
+          // Add the initial position to the path (to start the polyline)
+          setPathState((prevPath) => [...prevPath, [latitude, longitude]]);
         },
         (geoError) => {
           handleError(new Error(`Geolocation error: ${geoError.message}`));
         },
         { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
       );
-      setWatchId(id);
+  
+      // Use setInterval to fetch the current position and send it to the backend every 5 seconds
+      const intervalId = setInterval(() => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            const locationData = {
+              lat: latitude,
+              lng: longitude,
+              timestamp: new Date(),
+            };
+  
+            // Save the movement every 5 seconds
+            saveMovement(locationData, activeSessionId);
+            console.log(`Location updated and saved: Lat: ${latitude}, Lng: ${longitude}`);
+  
+            // Optionally, update the last known location for feedback
+            setLastLocation(`Lat: ${latitude}, Lng: ${longitude}`);
+  
+            // Add the updated position to the path to keep drawing the polyline
+            setPathState((prevPath) => [...prevPath, [latitude, longitude]]);
+          },
+          (geoError) => {
+            handleError(new Error(`Geolocation error: ${geoError.message}`));
+          },
+          { enableHighAccuracy: true }
+        );
+      }, 5000); // Run every 5 seconds
+  
+      // Store both the watchId and the intervalId so we can stop them later
+      setWatchId({ id, intervalId });
       setLoading(false);
     } else {
       setError('Geolocation is not supported by this browser.');
@@ -144,14 +179,14 @@ const TrackMovement = ({ addLocation }) => {
   // Function to stop tracking the user's movement
   const stopTracking = () => {
     if (watchId) {
-      navigator.geolocation.clearWatch(watchId);
-      setWatchId(null);
+      navigator.geolocation.clearWatch(watchId.id); // Clear the geolocation watch
+      clearInterval(watchId.intervalId); // Clear the interval that sends location every 5 seconds
+      setWatchId(null); // Reset the watchId state
       setError('Tracking stopped.');
     }
-
-    // Clear the active session and reset tracking state
-    setSessionId(null);
-    setTracking(false);
+  
+    setSessionId(null); // Clear the active session
+    setTracking(false); // Reset the tracking state
   };
 
   // Clean up the geolocation watch and stop tracking when the component is unmounted
