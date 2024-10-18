@@ -27,18 +27,19 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
             </>
           )}
         </ul>
+        {isLoggedIn && <Logout handleLogout={handleLogout} className="logout-button" />}
       </div>
+
       <div className="navbar-center">
         <Link to="/location" className="logo">
           Locations
         </Link>
       </div>
+
       <div className="navbar-right">
         <Link to="/" className="home-button">
           Home
         </Link>
-
-        {isLoggedIn && <Logout handleLogout={handleLogout} />}
       </div>
     </nav>
   );
