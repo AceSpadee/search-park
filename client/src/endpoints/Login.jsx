@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate, useOutletContext } from 'react-router-dom'; // Use useOutletContext to get setIsLoggedIn
 
 const Login = () => {
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const navigate = useNavigate();
+  const { setIsLoggedIn } = useOutletContext(); // Retrieve setIsLoggedIn from Outlet context
 
-  // Dynamically determine the backend URL based on environment
   const apiUrl = import.meta.env.MODE === 'production' 
     ? import.meta.env.VITE_PROD_BACKEND_URL 
     : import.meta.env.VITE_BACKEND_URL;
 
-  // Function to handle errors
   const handleError = (error) => {
     if (error.response) {
       if (error.response.status === 401) {
@@ -29,22 +30,21 @@ const Login = () => {
     console.error('Login error:', error);
   };
 
-  // Function to handle user login
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      // Send the login request to the backend
       const response = await axios.post(`${apiUrl}/api/auth/login`, {
-        userName: userName.trim(),  // Trim input to avoid leading/trailing spaces
+        userName: userName.trim(),
         password: password.trim(),
       });
 
-      // Store token and show success message
       localStorage.setItem('token', response.data.token);
       setMessage('Login successful!');
+      setIsLoggedIn(true); // Update login state to true
+      navigate('/location');
     } catch (error) {
-      handleError(error);  // Handle errors using the helper function
+      handleError(error);
     }
   };
 
