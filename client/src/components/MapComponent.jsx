@@ -4,12 +4,12 @@ import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerIconRed from '../assets/red-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-// Fix the broken marker icon issue
-const DefaultIcon = L.icon({
-  iconUrl: markerIcon,
+// Set a red marker icon
+const RedIcon = L.icon({
+  iconUrl: markerIconRed,
   shadowUrl: markerShadow,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -17,7 +17,15 @@ const DefaultIcon = L.icon({
   shadowSize: [41, 41],
 });
 
-L.Marker.prototype.options.icon = DefaultIcon;
+// Default blue marker icon for movements
+const DefaultIcon = L.icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 const MapComponent = ({ newLocation }) => {
   const [markers, setMarkers] = useState([]); // Initialize markers as an empty array
@@ -190,6 +198,7 @@ const MapComponent = ({ newLocation }) => {
         <Marker
           key={marker._id || index}
           position={[marker.lat, marker.lng]}
+          icon={marker.notes !== 'Session movement' ? RedIcon : DefaultIcon}
           draggable={true}
           eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}
         >
@@ -206,7 +215,7 @@ const MapComponent = ({ newLocation }) => {
   
       {/* Display markers for each movement point in the path */}
       {Array.isArray(path) && path.length > 0 && path.map((point, index) => (
-        <Marker key={index} position={point}>
+        <Marker key={index} position={point} icon={DefaultIcon}>
           <Popup>Movement Point {index + 1}</Popup>
         </Marker>
       ))}
