@@ -181,7 +181,7 @@ const MapComponent = ({ newLocation }) => {
   };
 
   return (
-    <MapContainer center={[45.6280, -122.6739]} zoom={12} style={{ height: '400px', width: '100%' }}>
+    <MapContainer center={[45.6280, -122.6739]} zoom={12} style={{ height: '650px', width: '100%' }}>
       <TileLayer
         url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
         attribution="Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA"
