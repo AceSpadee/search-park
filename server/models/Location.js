@@ -1,7 +1,8 @@
 const moment = require('moment-timezone');
-const { Schema, model } = require('mongoose');
+const mongoose = require('mongoose');
+const { Schema, model } = mongoose;
 
-const locationSchema = new Schema({
+const locationSchema = new mongoose.Schema({
   lat: {
     type: Number,
     required: true,
@@ -12,24 +13,25 @@ const locationSchema = new Schema({
   },
   timestamp: { 
     type: Date,
-    default: () => moment().utc().toDate(),  // Store the original timestamp as a Date object
+    default: () => moment().utc().toDate(),
   },
   formattedTimestamp: {
-    type: String,  // Store the formatted timestamp directly in the database
+    type: String,
   },
   notes: {
     type: String,
     required: false,
   },
   user: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
+    index: true, // Add index for faster querying
   },
   userFullName: {
-    type: String, // Store the user's full name directly in the Location document
+    type: String,
   }
-});
+}, { versionKey: false });
 
 // Pre-save hook to format the timestamp before saving
 locationSchema.pre('save', function (next) {

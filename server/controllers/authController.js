@@ -6,8 +6,11 @@ const User = require('../models/User');
 // Controller function for registering a new user
 const register = async (req, res) => {
   try {
+    // Normalize the username to lowercase to avoid case sensitivity issues
+    const normalizedUserName = req.body.userName.trim().toLowerCase();
+
     // Check if the user with the same userName already exists
-    const existingUser = await User.findOne({ userName: req.body.userName });
+    const existingUser = await User.findOne({ userName: normalizedUserName });
 
     if (existingUser) {
       // If userName already exists, respond with a 400 Bad Request and a message
@@ -16,21 +19,30 @@ const register = async (req, res) => {
 
     // Create a new user instance using the User model
     const user = new User({
-      firstName: req.body.firstName,   // Assign first name from the request
-      lastName: req.body.lastName,     // Assign last name from the request
-      userName: req.body.userName,     // Assing user name from the request
-      password: req.body.password,     // Assign plain password (hashed in the pre-save hook)
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      userName: normalizedUserName,
+      password: req.body.password, // Will be hashed in the pre-save hook
     });
 
     // Save the new user to the database
     await user.save();
 
-    // Respond with a success message and status code 201 (Created)
-    res.status(201).json({ message: 'User registered successfully' });
+    // After saving, generate a JWT token to log the user in immediately
+    const payload = {
+      user: {
+        id: user._id,  // Include the user's id in the token payload
+      },
+    };
+
+    // Generate the JWT token with a 1-hour expiration time
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
+
+    // Respond with the token and a success message
+    res.status(201).json({ message: 'User registered successfully', token });
   } catch (error) {
     // Handle MongoDB duplicate key error (e.g., for unique fields like userName)
     if (error.code === 11000) {
-      // Respond with a 400 Bad Request and a message
       return res.status(400).json({ message: 'Username already exists' });
     }
 

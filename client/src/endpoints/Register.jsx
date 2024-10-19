@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate, useOutletContext } from 'react-router-dom'; // Import useNavigate for redirecting
 
-const Register = () => {
+const Register = () => { // Expect setIsLoggedIn from props
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const navigate = useNavigate(); // Initialize the useNavigate hook
+  const { setIsLoggedIn } = useOutletContext();
 
   // Dynamically determine the backend URL based on environment
   const apiUrl = import.meta.env.MODE === 'production' 
@@ -31,28 +34,35 @@ const Register = () => {
     console.error('Error registering user:', error);
   };
 
-  // Function to handle user registration
+  // Function to handle user registration and auto login
   const handleRegister = async (e) => {
     e.preventDefault();
-    
+
     try {
+      // First, register the user
       const response = await axios.post(`${apiUrl}/api/auth/register`, {
         firstName,
         lastName,
         userName,
         password,
       });
-  
+
       if (response.status === 201) {
-        setMessage('User registered successfully!');
+        setMessage('User registered successfully! Logging in...');
+
+        // Automatically log the user in after successful registration
+        const loginResponse = await axios.post(`${apiUrl}/api/auth/login`, {
+          userName: userName.trim(),
+          password: password.trim(),
+        });
+
+        // Store the token and update login state
+        localStorage.setItem('token', loginResponse.data.token);
+        setIsLoggedIn(true); // Update the login state to true
+        navigate('/location'); // Redirect to location page after successful login
       }
     } catch (error) {
-      if (error.response && error.response.data.message) {
-        setMessage(error.response.data.message);  // Show specific error message from the backend
-      } else {
-        setMessage('Error during registration. Please try again.');
-      }
-      console.error('Error registering user:', error);
+      handleError(error);
     }
   };
 
