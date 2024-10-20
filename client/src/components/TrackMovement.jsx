@@ -127,7 +127,7 @@ const TrackMovement = ({ addLocation }) => {
           },
           { enableHighAccuracy: true }
         );
-      }, 5000); // Run every 5 seconds
+      }, 15000); // Run every 15 seconds
   
       // Store both the watchId and the intervalId so we can stop them later
       setWatchId({ id, intervalId });
