@@ -86,13 +86,28 @@ const updateLocation = async (req, res) => {
 const deleteLocation = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('Received delete request for location ID:', id);
 
+    // Validate the ID
+    if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid location ID' });
+    }
+
+    // Attempt to delete the location by ID
     const deletedLocation = await Location.findByIdAndDelete(id);
     if (!deletedLocation) {
+      console.log('Location not found in database');
       return res.status(404).json({ message: 'Location not found' });
     }
 
-    res.json({ message: 'Location deleted successfully' });
+    // Remove the location ID from users' location arrays
+    const updateResult = await User.updateMany(
+      { locations: id }, // Find users with the location ID
+      { $pull: { locations: id } } // Remove the location ID from the array
+    );
+
+    console.log('Location deleted from user collection:', updateResult);
+    res.json({ message: 'Location deleted successfully from both collections' });
   } catch (error) {
     console.error('Error deleting location:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

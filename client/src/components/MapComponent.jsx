@@ -162,21 +162,20 @@ const MapComponent = ({ newLocation }) => {
   };
 
   const handleDeleteMarker = async (index) => {
-    const token = getToken(); // Get JWT token from localStorage
-    const { _id } = markers[index]; // Get the location's _id
-
-    // Send a DELETE request to the backend to remove the marker
+    const token = getToken(); // Get the JWT token
+    const locationId = markers[index]._id;
+  
     try {
-      await axios.delete(`${apiUrl}/api/location`, {
+      const response = await axios.delete(`${apiUrl}/api/location/${locationId}`, {
         headers: { 'x-auth-token': token },
-        data: { locationId: _id },
       });
-
-      // Remove the marker from the state after successful deletion
-      setMarkers(prevMarkers => prevMarkers.filter((_, i) => i !== index));
-      console.log(`Marker with id (${_id}) deleted successfully.`);
+  
+      if (response.status === 200) {
+        setMarkers(prevMarkers => prevMarkers.filter((_, i) => i !== index));
+        console.log(`Marker with ID (${locationId}) deleted successfully from the database.`);
+      }
     } catch (error) {
-      handleError(error);
+      console.error('Error deleting marker:', error);
     }
   };
 
