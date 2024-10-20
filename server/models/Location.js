@@ -31,7 +31,7 @@ const locationSchema = new mongoose.Schema({
   userFullName: {
     type: String,
   }
-});
+}, { versionKey: false });
 
 // Pre-save hook to format the timestamp before saving
 locationSchema.pre('save', function (next) {

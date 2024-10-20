@@ -12,11 +12,13 @@ const saveLocation = async (req, res) => {
       return res.status(400).json({ message: 'Latitude and longitude are required' });
     }
 
+    // Find the user by ID from the request
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Create the new location
     const location = new Location({
       lat,
       lng,
@@ -26,7 +28,14 @@ const saveLocation = async (req, res) => {
       timestamp: new Date(),
     });
 
+    // Save the location to the database
     const savedLocation = await location.save();
+
+    // Update the user's locations array to include the new location
+    user.locations.push(savedLocation._id);
+    await user.save();
+
+    // Respond with the saved location
     res.status(201).json(savedLocation);
   } catch (error) {
     console.error('Error saving location:', error);

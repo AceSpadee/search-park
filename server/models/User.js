@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
       ref: 'Session', // Reference to the Session model
     }
   ],
-});
+}, { versionKey: false });
 
 // Pre-save hook to hash the password before saving
 userSchema.pre('save', async function (next) {

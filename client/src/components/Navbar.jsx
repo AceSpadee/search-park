@@ -1,35 +1,48 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import '../styling/Navbar.css';
+import Logout from './Logout';
 
-const Navbar = () => {
+const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsLoggedIn(false); // Update login status to false
+  };
+
   return (
+    <nav className="navbar">
+      <div className="navbar-left">
+        <ul className="nav-links">
+          <li>
+            <Link to="/map">Map</Link>
+          </li>
+          {!isLoggedIn && (
+            <>
+              <li>
+                <Link to="/login">Login</Link>
+              </li>
+              <li>
+                <Link to="/register">Register</Link>
+              </li>
+            </>
+          )}
+        </ul>
+        {isLoggedIn && <Logout handleLogout={handleLogout} className="logout-button" />}
+      </div>
 
-<nav className="navbar">
-  <div className="navbar-left">
-    <ul className="nav-links">
-      <li>
-        <a href="/map">Map</a>
-      </li>
-      <li>
-        <a href="/login">Login</a>
-      </li>
-      <li>
-        <a href="/register">Register</a>
-      </li>
-    </ul>
-  </div>
-  <div className="navbar-center">
-    <a href="/location" className="logo">
-      locations
-    </a>
-  </div>
-  <div className="navbar-right">
-    <a href="/" className="home-button">
-      Home
-    </a>
-  </div>
-</nav>
-);
+      <div className="navbar-center">
+        <Link to="/location" className="logo">
+          Locations
+        </Link>
+      </div>
+
+      <div className="navbar-right">
+        <Link to="/" className="home-button">
+          Home
+        </Link>
+      </div>
+    </nav>
+  );
 };
 
 export default Navbar;

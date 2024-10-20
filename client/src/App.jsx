@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
+
   return (
     <div>
-      <Navbar />
+      <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
       <main>
-        {/* This is where the routed content will be displayed */}
-        <Outlet />
+        {/* Pass setIsLoggedIn to the Login component */}
+        <Outlet context={{ isLoggedIn, setIsLoggedIn }} />
       </main>
     </div>
   );
