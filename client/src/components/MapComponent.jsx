@@ -3,11 +3,12 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import CustomMarkerCluster from './CustomMarkerCluster';
 
 import markerIconRed from '../assets/red-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import markerShadow from '../assets/marker-shadow.png';
 
-// Set a red marker icon
+// Set a red marker icon for locations
 const RedIcon = L.icon({
   iconUrl: markerIconRed,
   shadowUrl: markerShadow,
@@ -17,10 +18,11 @@ const RedIcon = L.icon({
   shadowSize: [41, 41],
 });
 
-// Default blue marker icon for movements
-const DefaultIcon = L.icon({
+// Set a blue marker icon for movements
+// Define the blue marker icon explicitly
+const BlueIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-  shadowUrl: markerShadow,
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -65,44 +67,38 @@ const MapComponent = ({ newLocation }) => {
       setError('User not logged in. Please log in to see your locations.');
       return;
     }
-  
+
     try {
-      // Fetch saved locations (from TrackLocation functionality)
       const locationResponse = await axios.get(`${apiUrl}/api/location`, {
         headers: { 'x-auth-token': token },
       });
-  
-      // Fetch session movements (from TrackMovement functionality)
+
       const sessionResponse = await axios.get(`${apiUrl}/api/session`, {
         headers: { 'x-auth-token': token },
       });
-  
-      // Log the session data to ensure it's coming through properly
-      console.log('Session data:', sessionResponse.data);
-  
+
       const locationsData = Array.isArray(locationResponse.data) ? locationResponse.data : [];
       const sessionsData = Array.isArray(sessionResponse.data) ? sessionResponse.data : [];
-  
-      // Process session data directly (since session data is already an array of movements)
+
       const sessionMarkers = sessionsData.map(movement => ({
         lat: movement.lat,
         lng: movement.lng,
-        notes: movement.notes || 'Session movement',
+        isMovement: true,
         _id: movement._id || `session-${movement.timestamp}`,
       }));
-  
-      console.log('Session Markers:', sessionMarkers); // Log to ensure movements are processed
-  
-      // Combine both location markers (from TrackLocation) and session movement markers (from TrackMovement)
-      const combinedMarkers = [...locationsData, ...sessionMarkers];
-      setMarkers(combinedMarkers); // Set markers to display both saved locations and movements
-  
-      // Create path coordinates from sessionMarkers to draw polyline for session movements
+
+      const locationMarkers = locationsData.map(loc => ({
+        ...loc,
+        isMovement: false,
+      }));
+
+      setMarkers([...locationMarkers, ...sessionMarkers]);
+
       const pathCoordinates = sessionMarkers.map(marker => [marker.lat, marker.lng]);
-      setPath(pathCoordinates);  // Set the polyline path for movements
-  
+      setPath(pathCoordinates);
+
     } catch (error) {
-      handleError(error);
+      console.error('Error fetching locations:', error);
     }
   };
 
@@ -124,7 +120,8 @@ const MapComponent = ({ newLocation }) => {
   // Add new marker when a new location is passed in
   useEffect(() => {
     if (newLocation && newLocation._id && !markers.some(marker => marker._id === newLocation._id)) {
-      setMarkers(prevMarkers => [...prevMarkers, newLocation]); // Add the new location as a marker
+      const isMovement = newLocation.notes === 'Session movement';
+      setMarkers(prevMarkers => [...prevMarkers, { ...newLocation, isMovement }]);
     }
   }, [newLocation, markers]);
 
@@ -180,7 +177,7 @@ const MapComponent = ({ newLocation }) => {
   };
 
   return (
-    <MapContainer center={[45.6280, -122.6739]} zoom={12} style={{ height: '650px', width: '100%' }}>
+    <MapContainer center={[45.6280, -122.6739]} zoom={12} style={{ height: '650px', width: '100%' }} preferCanvas={true}>
       <TileLayer
         url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
         attribution="Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA"
@@ -192,12 +189,12 @@ const MapComponent = ({ newLocation }) => {
         opacity={0.4}
       />
   
-      {/* Display markers for saved locations and movements */}
-      {Array.isArray(markers) && markers.length > 0 && markers.map((marker, index) => (
+      {/* Render non-movement markers (locations) separately */}
+      {markers.filter(marker => !marker.isMovement).map((marker, index) => (
         <Marker
           key={marker._id || index}
           position={[marker.lat, marker.lng]}
-          icon={marker.notes !== 'Session movement' ? RedIcon : DefaultIcon}
+          icon={RedIcon}
           draggable={true}
           eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}
         >
@@ -208,16 +205,12 @@ const MapComponent = ({ newLocation }) => {
           </Popup>
         </Marker>
       ))}
-  
-      {/* Display a polyline for the path movements */}
-      {Array.isArray(path) && path.length > 1 && <Polyline positions={path} color="blue" />}
-  
-      {/* Display markers for each movement point in the path */}
-      {Array.isArray(path) && path.length > 0 && path.map((point, index) => (
-        <Marker key={index} position={point} icon={DefaultIcon}>
-          <Popup>Movement Point {index + 1}</Popup>
-        </Marker>
-      ))}
+
+      {/* Cluster movement markers */}
+      <CustomMarkerCluster markers={markers.filter(marker => marker.isMovement)} blueIcon={BlueIcon} />
+
+      {/* Single polyline for movement path */}
+      {path.length > 1 && <Polyline positions={path} color="blue" />}
     </MapContainer>
   );
 };
