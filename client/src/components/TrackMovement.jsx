@@ -202,16 +202,23 @@ const TrackMovement = ({ addLocation }) => {
 
   return (
     <div className="track-movement-container">
-      <button onClick={startTracking} disabled={watchId !== null || loading}>
+      <button
+        className="start-button"
+        onClick={startTracking}
+        disabled={watchId !== null || loading}
+      >
         {loading ? 'Starting...' : 'Start Tracking Movement'}
       </button>
 
-      <button onClick={stopTracking} disabled={watchId === null}>
+      <button
+        className="stop-button"
+        onClick={stopTracking}
+        disabled={watchId === null}
+      >
         Stop Tracking Movement
       </button>
 
       {error && <p className="error">{error}</p>}
-
       {lastLocation && (
         <p className="last-location">
           <strong>Last known location:</strong> {lastLocation}

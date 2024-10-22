@@ -5,6 +5,10 @@
   --fourth-color: #c4bbf0;
   --text-color: #f0f0f0;
   --dark-text-color: #2c2c2c;
+  --start-color: #28a745;  /* Green for start */
+  --stop-color: #dc3545;   /* Red for stop */
+  --start-hover: #218838;  /* Darker green for hover */
+  --stop-hover: #c82333;   /* Darker red for hover */
 }
 
 /* Container for tracking buttons */
@@ -12,8 +16,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;  /* Space between buttons */
-  flex-wrap: wrap;  /* Allow wrapping on smaller screens */
+  gap: 10px;
+  flex-wrap: wrap;
   margin-top: 20px;
 }
 
@@ -25,54 +29,46 @@
   margin: 0;
   border: none;
   box-shadow: none;
-  background-color: var(--second-color);  /* Match container color */
-  color: var(--text-color);
-}
-
-/* Button styling */
-.track-movement-container button {
-  padding: 10px 20px;
-  font-size: 16px;
-  border: 2px solid var(--third-color);  /* Add border for contrast */
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s, border 0.3s, transform 0.2s;
-  flex: 1;
-}
-
-.track-movement-container button:disabled {
-  background-color: var(--first-color);
-  color: var(--text-color);
-  border-color: var(--third-color);
-  cursor: not-allowed;
-}
-
-/* Start Tracking button */
-.track-movement-container button:first-of-type {
-  background-color: var(--fourth-color);
-  color: var(--dark-text-color);
-  border-color: var(--third-color);
-}
-
-.track-movement-container button:first-of-type:hover:not(:disabled) {
-  background-color: var(--third-color);
-  color: var(--text-color);
-  border-color: var(--second-color);
-  transform: scale(1.05);
-}
-
-/* Stop Tracking button */
-.track-movement-container button:last-of-type {
   background-color: var(--second-color);
   color: var(--text-color);
-  border-color: var(--third-color);
 }
 
-.track-movement-container button:last-of-type:hover:not(:disabled) {
-  background-color: var(--third-color);
+/* Button styling */  
+.track-movement-container button {
+  padding: 12px 20px;
+  font-size: 16px;
+  border: 2px solid transparent; /* Add a transparent border for consistency */
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s, transform 0.2s, border 0.3s;
+  flex: 1; /* Make buttons flexible */
+}
+
+/* Start Movement button styling */
+.track-movement-container .start-button {
+  background-color: var(--start-color);
   color: var(--text-color);
-  border-color: var(--fourth-color);
-  transform: scale(1.05);
+}
+
+.track-movement-container .start-button:hover {
+  background-color: var(--start-hover);
+}
+
+/* Stop Movement button styling */
+.track-movement-container .stop-button {
+  background-color: var(--stop-color);
+  color: var(--text-color);
+}
+
+.track-movement-container .stop-button:hover {
+  background-color: var(--stop-hover);
+}
+
+/* Disabled button styling */
+.track-movement-container button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
 }
 
 /* Responsive behavior */
