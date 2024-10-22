@@ -11,38 +11,29 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
 
   return (
     <nav className="navbar">
-      <div className="navbar-left">
-        <ul className="nav-links">
-          <li>
-            <Link to="/map">Map</Link>
-          </li>
-          {!isLoggedIn && (
-            <>
-              <li>
-                <Link to="/login">Login</Link>
-              </li>
-              <li>
-                <Link to="/register">Register</Link>
-              </li>
-            </>
-          )}
-        </ul>
-        {isLoggedIn && <Logout handleLogout={handleLogout} className="logout-button" />}
+      <div className="nav-section nav-links">
+        <Link to="/map" className="nav-button map-btn">Map</Link>
+        {!isLoggedIn && (
+          <>
+            <Link to="/login" className="nav-button">Login</Link>
+            <Link to="/register" className="nav-button">Register</Link>
+          </>
+        )}
+        {isLoggedIn && (
+          <Logout handleLogout={handleLogout} className="nav-button logout-button" />
+        )}
       </div>
 
-      <div className="navbar-center">
-        <Link to="/location" className="logo">
-          Locations
-        </Link>
+      <div className="nav-section logo">
+        <Link to="/location" className="nav-button">Locations</Link>
       </div>
 
-      <div className="navbar-right">
-        <Link to="/" className="home-button">
-          Home
-        </Link>
+      <div className="nav-section">
+        <Link to="/" className="nav-button home-btn">Home</Link>
       </div>
     </nav>
   );
 };
+
 
 export default Navbar;

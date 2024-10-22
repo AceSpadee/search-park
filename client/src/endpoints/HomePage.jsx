@@ -7,7 +7,7 @@ const HomePage = () => {
     <div className='container'>
       <h1 className='title'>Ayo this will help!!!</h1>
       <p className='description'>
-        This app allows you to find the park your looking for. hopefully
+        This app allows you to find the park you're looking for. Hopefully.
       </p>
       <div className='button-container'>
         <Link to="/map" className='button'>

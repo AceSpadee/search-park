@@ -1,0 +1,100 @@
+  /* MapComponent.css */
+
+  /* Full-screen map container */
+  .map-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;  /* Full viewport width */
+    height: 100vh;  /* Full viewport height */
+    margin: 0;
+    padding: 0;
+    z-index: 0;
+  }
+
+  /* Alert styling for error messages */
+  .alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    text-align: center;
+  }
+
+  /* Card styling */
+  .card {
+    width: 100%;  /* Make the card full width */
+    height: 100%;  /* Make the card fill the parent container */
+    border: none;  /* Remove border */
+    border-radius: 0;  /* Remove border radius */
+    box-shadow: none;  /* Remove box shadow */
+    margin: 0;
+    padding: 0;
+  }
+
+  .card-header {
+    background-color: #007bff;
+    color: #fff;
+    padding: 15px;
+    border-radius: 8px 8px 0 0;
+    text-align: center;
+    font-size: 1.2em;
+  }
+
+  .card-body {
+    padding: 0;  /* No padding to ensure map takes full space */
+    height: 100%;  /* Full height for the map */
+    margin: 0;
+    border: none;
+    box-shadow: none;
+  }
+
+  /* Button styling */
+  .btn-danger {
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+  }
+
+  .btn-danger:hover {
+    background-color: #c82333;
+  }
+
+  .btn-sm {
+    font-size: 0.875em;
+  }
+
+  .mt-2 {
+    margin-top: 10px;
+  }
+
+  /* Leaflet map styling */
+  .leaflet-container {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;  /* Remove border-radius for full-screen view */
+  }
+
+  @media (max-width: 768px) {
+    .map-container {
+      height: 100vh;  /* Full height on mobile */
+    }
+
+    .card-body {
+      height: 100%;  /* Make sure the map takes full space inside the container */
+    }
+  }
+  
+  .leaflet-container {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;  /* Remove border-radius for full-screen view */
+  }

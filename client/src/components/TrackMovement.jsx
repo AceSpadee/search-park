@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import "../styling/TrackMovement.css"
 
 const TrackMovement = ({ addLocation }) => {
   const [watchId, setWatchId] = useState(null);  // Store the geolocation watch ID
@@ -200,23 +201,19 @@ const TrackMovement = ({ addLocation }) => {
   }, [watchId]);
 
   return (
-    <div>
-      {/* Start Tracking Button */}
+    <div className="track-movement-container">
       <button onClick={startTracking} disabled={watchId !== null || loading}>
         {loading ? 'Starting...' : 'Start Tracking Movement'}
       </button>
 
-      {/* Stop Tracking Button */}
       <button onClick={stopTracking} disabled={watchId === null}>
         Stop Tracking Movement
       </button>
 
-      {/* Display any error messages */}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p className="error">{error}</p>}
 
-      {/* Display last known location for feedback */}
       {lastLocation && (
-        <p>
+        <p className="last-location">
           <strong>Last known location:</strong> {lastLocation}
         </p>
       )}

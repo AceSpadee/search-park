@@ -3,6 +3,7 @@ import axios from 'axios';
 import TrackLocation from '../components/TrackLocation';
 import TrackMovement from '../components/TrackMovement';
 import MapComponent from '../components/MapComponent';
+import "../styling/Location.css"
 
 const LocationApp = () => {
   const [locations, setLocations] = useState([]); // Store user's locations
@@ -124,24 +125,22 @@ const LocationApp = () => {
   }, [newLocation]);
 
   return (
-    <div>
-      <h1>Track My Location</h1>
+    <div className="location-app">
 
-      {/* Pass the addLocation function to TrackLocation so it can update the map */}
-      <TrackLocation addLocation={addLocation} />
+      <div className="controls">
+        <TrackLocation addLocation={setNewLocation} />
 
-      <TrackMovement addLocation={addLocation} />
+        <TrackMovement addLocation={setNewLocation} />
+      </div>
 
-      {/* Display loading indicator */}
-      {loading && <p>Loading map data...</p>}
+      {error && <div className="alert-danger">{error}</div>}
 
-      {/* Display any error messages */}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      {/* Pass the locations and path to MapComponent to display them */}
-      <MapComponent locations={locations} newLocation={newLocation} path={path} />
+      <div className="map-wrapper">
+        <MapComponent locations={locations} newLocation={newLocation} path={path} />
+      </div>
     </div>
   );
 };
+
 
 export default LocationApp;

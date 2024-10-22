@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import '../styling/TrackLocation.css';
 
 const TrackLocation = ({ addLocation }) => {
   const [location, setLocation] = useState(null);  // State to track saved location
@@ -77,7 +78,7 @@ const TrackLocation = ({ addLocation }) => {
   };
 
   return (
-    <div>
+    <div className="track-location-container">
       <textarea 
         placeholder="Enter a note (optional)" 
         value={note} 
@@ -86,7 +87,7 @@ const TrackLocation = ({ addLocation }) => {
       <button onClick={trackLocation}>Track My Location</button>
       
       {/* Display error message if it exists */}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p className="error">{error}</p>}
       
       {/* Display saved location coordinates */}
       {location && (

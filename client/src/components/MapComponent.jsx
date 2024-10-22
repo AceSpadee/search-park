@@ -2,6 +2,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
+import "../styling/MapComponent.css"
 import L from 'leaflet';
 import CustomMarkerCluster from './CustomMarkerCluster';
 
@@ -177,41 +178,52 @@ const MapComponent = ({ newLocation }) => {
   };
 
   return (
-    <MapContainer center={[45.6280, -122.6739]} zoom={12} style={{ height: '650px', width: '100%' }} preferCanvas={true}>
-      <TileLayer
-        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-        attribution="Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA"
-      />
-      
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="&copy; OpenStreetMap contributors"
-        opacity={0.4}
-      />
-  
-      {/* Render non-movement markers (locations) separately */}
-      {markers.filter(marker => !marker.isMovement).map((marker, index) => (
-        <Marker
-          key={marker._id || index}
-          position={[marker.lat, marker.lng]}
-          icon={RedIcon}
-          draggable={true}
-          eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}
-        >
-          <Popup>
-            {marker.notes || 'No notes for this location'}
-            <br />
-            <button onClick={() => handleDeleteMarker(index)}>Delete Marker</button>
-          </Popup>
-        </Marker>
-      ))}
+    <div className="map-container">
+      {error && <div className="alert-danger">{error}</div>}
+      <div className="card">
+        <div className="card-header">
+          <h5>Locations</h5>
+        </div>
+        <div className="card-body">
+          <MapContainer center={[45.6280, -122.6739]} zoom={12} style={{ height: '650px', width: '100%' }} preferCanvas={true}>
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              attribution="Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA"
+            />
+            
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="&copy; OpenStreetMap contributors"
+              opacity={0.4}
+            />
 
-      {/* Cluster movement markers */}
-      <CustomMarkerCluster markers={markers.filter(marker => marker.isMovement)} blueIcon={BlueIcon} />
+            {markers.filter(marker => !marker.isMovement).map((marker, index) => (
+              <Marker
+                key={marker._id || index}
+                position={[marker.lat, marker.lng]}
+                icon={RedIcon}
+                draggable={true}
+                eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}
+              >
+                <Popup>
+                  {marker.notes || 'No notes for this location'}
+                  <br />
+                  <button 
+                    className="btn btn-danger btn-sm mt-2" 
+                    onClick={() => handleDeleteMarker(index)}
+                  >
+                    Delete Marker
+                  </button>
+                </Popup>
+              </Marker>
+            ))}
 
-      {/* Single polyline for movement path */}
-      {path.length > 1 && <Polyline positions={path} color="blue" />}
-    </MapContainer>
+            <CustomMarkerCluster markers={markers.filter(marker => marker.isMovement)} blueIcon={BlueIcon} />
+            {path.length > 1 && <Polyline positions={path} color="blue" />}
+          </MapContainer>
+        </div>
+      </div>
+    </div>
   );
 };
 

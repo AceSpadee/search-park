@@ -1,65 +1,105 @@
+/* Navbar.css */
+
+/* Base navbar styles */
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #333;
+  background-color: #007bff;
+  padding: 10px 20px;
   color: #fff;
-  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative; /* Make positioning relative to center the logo */
+  flex-wrap: wrap;  /* Allow wrapping on smaller screens */
 }
 
-.navbar-left {
+.nav-section {
   display: flex;
-  align-items: center;  /* Ensure vertical alignment of all items */
+  align-items: center;
 }
 
-.navbar-left .nav-links {
-  list-style-type: none;
+/* Container for the nav-links on the left */
+.nav-links {
   display: flex;
-  margin: 0;
-  padding: 0;
+  gap: 15px;
 }
 
-.navbar-left .nav-links li {
-  margin-right: 1rem;
-}
-
-.navbar-left .nav-links a {
+/* Unified button styles */
+.nav-button {
   color: #fff;
   text-decoration: none;
+  font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-.navbar-center .logo {
-  font-size: 1.5rem;
+.nav-button:hover {
+  background-color: #0056b3;
+}
+
+/* Add left padding to the Map button */
+.map-btn {
+  padding-left: 25px;  /* Add left padding for space */
+}
+
+/* Add right padding to the Home button */
+.home-btn {
+  padding-right: 25px;  /* Add right padding for space */
+}
+
+/* Center the logo ("Locations" button) */
+.logo {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 20px;
   font-weight: bold;
   color: #fff;
   text-decoration: none;
 }
 
-.navbar-right {
-  display: flex;
-  align-items: center;
-}
-
-.navbar-right .home-button {
-  color: #fff;
-  text-decoration: none;
-  margin-left: 1rem;
-  position: relative;
-}
-
 .logout-button {
-  background-color: #444;
-  color: #fff;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-left: 1rem;
-  font-size: 1rem;
-  transition: background-color 0.3s;
-  align-self: center;  /* Aligns with other items in the navbar */
+  background-color: #dc3545;
 }
 
 .logout-button:hover {
-  background-color: #555;
+  background-color: #c82333;
+}
+
+/* Responsive Navbar for mobile */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 20px;
+  }
+
+  .nav-section {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .nav-button {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+    font-size: 18px;
+  }
+
+  .logo {
+    position: static;
+    transform: none;
+    margin-top: 10px;
+  }
+
+  .map-btn {
+    padding-left: 20px;  /* Maintain left padding on mobile */
+  }
+
+  .home-btn {
+    padding-right: 20px; /* Maintain right padding on mobile */
+  }
 }

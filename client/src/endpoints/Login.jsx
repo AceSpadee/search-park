@@ -49,26 +49,32 @@ const Login = () => {
   };
 
   return (
-    <div>
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <input
-          type="text"
-          placeholder="User Name"
-          value={userName}
-          onChange={(e) => setUserName(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit">Login</button>
+    <div className="container mt-5">
+      <h2 className="text-center mb-4">Login</h2>
+      <form onSubmit={handleLogin} className="w-50 mx-auto">
+        <div className="form-group mb-3">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="User Name"
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
+            required
+          />
+        </div>
+        <div className="form-group mb-3">
+          <input
+            type="password"
+            className="form-control"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit" className="btn btn-primary w-100">Login</button>
       </form>
-      {message && <p>{message}</p>}
+      {message && <p className="text-center mt-3 text-danger">{message}</p>}
     </div>
   );
 };
