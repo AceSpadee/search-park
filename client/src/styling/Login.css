@@ -1,0 +1,72 @@
+:root {
+    --first-color: #363b4e;
+    --second-color: #4f3b78;
+    --third-color: #927fbf;
+    --fourth-color: #c4bbf0;
+    --text-color: #f0f0f0;
+    --dark-text-color: #2c2c2c; /* Darker text color */
+    --error-color: #d9534f;  /* Bright red for error text */
+    --error-bg-color: #f8d7da; /* Lighter red for error background */
+    --error-border-color: #f5c6cb; /* Slightly darker red for error border */
+  }
+  
+  .login-container {
+    background-color: var(--first-color); /* Dark background */
+    color: var(--text-color);
+    min-height: 100vh;
+    padding: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .login-form {
+    background-color: var(--second-color); /* Slightly lighter background */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .form-control {
+    background-color: var(--third-color);
+    color: var(--text-color);
+    border: 1px solid var(--fourth-color);
+    margin-bottom: 15px;
+    padding: 10px;
+  }
+  
+  .form-control::placeholder {
+    color: var(--fourth-color); /* Placeholder color */
+  }
+  
+  .btn-login {
+    background-color: var(--fourth-color); /* Lightest color */
+    color: var(--dark-text-color);         /* Darker text color */
+    padding: 12px;
+    border: 2px solid var(--first-color);  /* Border for contrast */
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.3s, border 0.3s, transform 0.2s;
+  }
+  
+  .btn-login:hover {
+    background-color: var(--second-color); /* Hover background color */
+    color: var(--text-color);              /* Hover text color */
+    border-color: var(--third-color);      /* Hover border color */
+    transform: scale(1.05);
+  }
+  
+  .text-danger {
+    color: #ff4c4c; /* Red color for error messages */
+    font-weight: bold;
+  }
+
+  .login-container .error-message {
+    color: var(--error-color);
+    background-color: var(--error-bg-color);
+    border-color: var(--error-border-color);
+  }

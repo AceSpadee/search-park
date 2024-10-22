@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useOutletContext } from 'react-router-dom'; // Import useNavigate for redirecting
+import "../styling/Register.css"
 
 const Register = () => { // Expect setIsLoggedIn from props
   const [firstName, setFirstName] = useState('');
@@ -67,9 +68,9 @@ const Register = () => { // Expect setIsLoggedIn from props
   };
 
   return (
-    <div className="container mt-5">
+    <div className="register-container">
       <h2 className="text-center mb-4">Register</h2>
-      <form onSubmit={handleRegister} className="w-50 mx-auto">
+      <form onSubmit={handleRegister} className="register-form w-50 mx-auto">
         <div className="form-group mb-3">
           <input
             type="text"
@@ -110,7 +111,9 @@ const Register = () => { // Expect setIsLoggedIn from props
             required
           />
         </div>
-        <button type="submit" className="btn btn-primary w-100">Register</button>
+        <button type="submit" className="btn-register w-100">
+          Register
+        </button>
       </form>
       {message && <p className="text-center mt-3 text-danger">{message}</p>}
     </div>

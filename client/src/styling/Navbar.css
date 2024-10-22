@@ -1,16 +1,25 @@
-/* Navbar.css */
+:root {
+  --first-color: #363b4e;
+  --second-color: #4f3b78;
+  --third-color: #927fbf;
+  --fourth-color: #c4bbf0;
+  --text-color: #f0f0f0;
+  --hover-color: #0056b3;
+  --danger-color: #dc3545;
+  --danger-hover-color: #c82333;
+}
 
 /* Base navbar styles */
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #007bff;
+  background-color: var(--second-color); /* Match color scheme */
   padding: 10px 20px;
-  color: #fff;
+  color: var(--text-color);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  position: relative; /* Make positioning relative to center the logo */
-  flex-wrap: wrap;  /* Allow wrapping on smaller screens */
+  position: relative;
+  flex-wrap: wrap;
 }
 
 .nav-section {
@@ -26,26 +35,30 @@
 
 /* Unified button styles */
 .nav-button {
-  color: #fff;
+  color: var(--text-color);
   text-decoration: none;
   font-size: 16px;
   padding: 8px 12px;
   border-radius: 4px;
   transition: background-color 0.3s, color 0.3s;
+  background-color: var(--third-color);  /* Apply color scheme */
+  border: 2px solid var(--first-color);
 }
 
 .nav-button:hover {
-  background-color: #0056b3;
+  background-color: var(--hover-color);
+  color: var(--text-color);
+  transform: scale(1.05);
 }
 
 /* Add left padding to the Map button */
 .map-btn {
-  padding-left: 25px;  /* Add left padding for space */
+  padding-left: 25px;
 }
 
 /* Add right padding to the Home button */
 .home-btn {
-  padding-right: 25px;  /* Add right padding for space */
+  padding-right: 25px;
 }
 
 /* Center the logo ("Locations" button) */
@@ -55,16 +68,19 @@
   transform: translateX(-50%);
   font-size: 20px;
   font-weight: bold;
-  color: #fff;
+  color: var(--text-color);
   text-decoration: none;
 }
 
 .logout-button {
-  background-color: #dc3545;
+  background-color: var(--danger-color);
+  color: var(--text-color);
+  border: 2px solid var(--third-color);
 }
 
 .logout-button:hover {
-  background-color: #c82333;
+  background-color: var(--danger-hover-color);
+  border-color: var(--fourth-color);
 }
 
 /* Responsive Navbar for mobile */
@@ -96,10 +112,10 @@
   }
 
   .map-btn {
-    padding-left: 20px;  /* Maintain left padding on mobile */
+    padding-left: 20px;
   }
 
   .home-btn {
-    padding-right: 20px; /* Maintain right padding on mobile */
+    padding-right: 20px;
   }
 }

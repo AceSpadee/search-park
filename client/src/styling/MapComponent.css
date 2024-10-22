@@ -1,5 +1,13 @@
   /* MapComponent.css */
 
+  :root {
+    --first-color: #363b4e;
+    --second-color: #4f3b78;
+    --third-color: #927fbf;
+    --fourth-color: #c4bbf0;
+    --text-color: #f0f0f0;
+  }
+
   /* Full-screen map container */
   .map-container {
     position: absolute;
@@ -14,6 +22,11 @@
     z-index: 0;
   }
 
+  .map-container .card .card-header {
+    background-color: var(--third-color);  /* Use third color */
+    color: var(--text-color);
+  }
+
   /* Alert styling for error messages */
   .alert-danger {
     color: #721c24;
@@ -25,33 +38,38 @@
     text-align: center;
   }
 
-  /* Card styling */
-  .card {
-    width: 100%;  /* Make the card full width */
-    height: 100%;  /* Make the card fill the parent container */
-    border: none;  /* Remove border */
-    border-radius: 0;  /* Remove border radius */
-    box-shadow: none;  /* Remove box shadow */
-    margin: 0;
-    padding: 0;
-  }
+/* Card styling */
+.card {
+  background-color: var(--second-color);  /* Match navbar color */
+  color: var(--text-color);
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
 
-  .card-header {
-    background-color: #007bff;
-    color: #fff;
-    padding: 15px;
-    border-radius: 8px 8px 0 0;
-    text-align: center;
-    font-size: 1.2em;
-  }
+/* Update card header to match the color scheme */
+.card-header {
+  background-color: var(--third-color);  /* Use third color */
+  color: var(--text-color);
+  padding: 15px;
+  border-radius: 0;  /* Remove rounded corners */
+  text-align: center;
+  font-size: 1.2em;
+}
 
-  .card-body {
-    padding: 0;  /* No padding to ensure map takes full space */
-    height: 100%;  /* Full height for the map */
-    margin: 0;
-    border: none;
-    box-shadow: none;
-  }
+/* Card body styling */
+.card-body {
+  background-color: var(--second-color);  /* Match card body to navbar */
+  padding: 0;
+  height: 100%;
+  margin: 0;
+  border: none;
+  box-shadow: none;
+}
 
   /* Button styling */
   .btn-danger {

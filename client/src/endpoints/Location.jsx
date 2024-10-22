@@ -3,7 +3,7 @@ import axios from 'axios';
 import TrackLocation from '../components/TrackLocation';
 import TrackMovement from '../components/TrackMovement';
 import MapComponent from '../components/MapComponent';
-import "../styling/Location.css"
+import "../styling/Location.css";
 
 const LocationApp = () => {
   const [locations, setLocations] = useState([]); // Store user's locations

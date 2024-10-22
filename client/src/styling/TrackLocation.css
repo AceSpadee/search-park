@@ -1,22 +1,35 @@
 /* TrackLocation.css */
+
+:root {
+  --first-color: #363b4e;
+  --second-color: #4f3b78;
+  --third-color: #927fbf;
+  --fourth-color: #c4bbf0;
+  --text-color: #f0f0f0;
+}
+
+/* Update background to match the dark color scheme */
 .track-location-container {
-  max-width: 600px;  /* Increased width */
-  min-height: 150px;  /* Added minimum height */
+  max-width: 600px;
+  min-height: 150px;
   margin: 20px auto;
   padding: 20px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--third-color);  /* Subtle border with third color */
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  background-color: #f9f9f9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);  /* Slightly darker shadow */
+  background-color: var(--second-color);  /* Match navbar color */
+  color: var(--text-color);  /* Use light text color */
 }
 
 .track-location-container textarea {
   width: 100%;
-  min-height: 150px;  /* Increased textarea height */
+  min-height: 150px;
   padding: 15px;
   margin-bottom: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--third-color);  /* Match border to color scheme */
   border-radius: 4px;
+  background-color: var(--fourth-color);  /* Darkest background */
+  color: var(--text-color);
   resize: vertical;
 }
 
@@ -24,8 +37,8 @@
   display: block;
   width: 100%;
   padding: 12px;
-  background-color: #007bff;
-  color: #fff;
+  background-color: var(--fourth-color);  /* Lightest color for buttons */
+  color: var(--first-color);  /* Dark text color */
   border: none;
   border-radius: 4px;
   font-size: 16px;
@@ -34,11 +47,12 @@
 }
 
 .track-location-container button:hover {
-  background-color: #0056b3;
+  background-color: #b0a2e0;  /* Slightly darker hover effect */
 }
 
 .track-location-container p {
   margin: 10px 0;
+  color: var(--text-color);  /* Ensure text color matches */
 }
 
 .track-location-container .error {
@@ -52,7 +66,7 @@
   }
 
   .track-location-container textarea {
-    min-height: 100px;  /* Reduce height */
+    min-height: 100px;
   }
 
   .track-location-container button {

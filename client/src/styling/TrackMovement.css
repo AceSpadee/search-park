@@ -1,4 +1,11 @@
-/* TrackMovement.css */
+:root {
+  --first-color: #363b4e;
+  --second-color: #4f3b78;
+  --third-color: #927fbf;
+  --fourth-color: #c4bbf0;
+  --text-color: #f0f0f0;
+  --dark-text-color: #2c2c2c;
+}
 
 /* Container for tracking buttons */
 .track-movement-container {
@@ -13,47 +20,59 @@
 /* Make sure card container is flexible */
 .card {
   width: 100%;
-  max-width: 100%;  /* Remove any max-width restriction */
+  max-width: 100%;
   padding: 0;
   margin: 0;
-  border: none;  /* Remove border for a cleaner look */
-  box-shadow: none;  /* Remove shadow for a simpler style */
+  border: none;
+  box-shadow: none;
+  background-color: var(--second-color);  /* Match container color */
+  color: var(--text-color);
 }
 
 /* Button styling */
 .track-movement-container button {
   padding: 10px 20px;
   font-size: 16px;
-  border: none;
+  border: 2px solid var(--third-color);  /* Add border for contrast */
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
-  flex: 1;  /* Make buttons flexible */
+  transition: background-color 0.3s, border 0.3s, transform 0.2s;
+  flex: 1;
 }
 
 .track-movement-container button:disabled {
-  background-color: #ccc;
+  background-color: var(--first-color);
+  color: var(--text-color);
+  border-color: var(--third-color);
   cursor: not-allowed;
 }
 
 /* Start Tracking button */
 .track-movement-container button:first-of-type {
-  background-color: #28a745;
-  color: #fff;
+  background-color: var(--fourth-color);
+  color: var(--dark-text-color);
+  border-color: var(--third-color);
 }
 
 .track-movement-container button:first-of-type:hover:not(:disabled) {
-  background-color: #218838;
+  background-color: var(--third-color);
+  color: var(--text-color);
+  border-color: var(--second-color);
+  transform: scale(1.05);
 }
 
 /* Stop Tracking button */
 .track-movement-container button:last-of-type {
-  background-color: #dc3545;
-  color: #fff;
+  background-color: var(--second-color);
+  color: var(--text-color);
+  border-color: var(--third-color);
 }
 
 .track-movement-container button:last-of-type:hover:not(:disabled) {
-  background-color: #c82333;
+  background-color: var(--third-color);
+  color: var(--text-color);
+  border-color: var(--fourth-color);
+  transform: scale(1.05);
 }
 
 /* Responsive behavior */

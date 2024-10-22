@@ -2,7 +2,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
-import "../styling/MapComponent.css"
+import "../styling/MapComponent.css";
 import L from 'leaflet';
 import CustomMarkerCluster from './CustomMarkerCluster';
 
