@@ -33,6 +33,7 @@ const MapComponent = ({ newLocation, isNewSession, onSessionReset }) => {
   const [markers, setMarkers] = useState([]); // Initialize markers as an empty array
   const [path, setPath] = useState([]); // Initialize path state
   const [error, setError] = useState(null); // State to track errors
+  const pathRef = useRef([]); // Ref to store the path state for immediate resets
 
   // Dynamically determine the backend URL based on environment
   const apiUrl = import.meta.env.MODE === 'production'
@@ -93,7 +94,8 @@ const MapComponent = ({ newLocation, isNewSession, onSessionReset }) => {
       }));
 
       setMarkers([...locationMarkers, ...sessionMarkers]);
-      setPath(sessionMarkers.map(marker => [marker.lat, marker.lng]));
+      pathRef.current = sessionMarkers.map(marker => [marker.lat, marker.lng]);
+      setPath(pathRef.current); // Set path to match ref
     } catch (error) {
       handleError(error);
     }
@@ -103,7 +105,8 @@ const MapComponent = ({ newLocation, isNewSession, onSessionReset }) => {
   useEffect(() => {
     if (isNewSession) {
       console.log('New session detected, clearing path...');
-      setPath([]); // Clear the path immediately
+      pathRef.current = []; // Clear the path ref immediately
+      setPath([]); // Clear the path state
       if (onSessionReset) onSessionReset(); // Notify parent to reset session state
     }
   }, [isNewSession, onSessionReset]);
@@ -119,7 +122,8 @@ const MapComponent = ({ newLocation, isNewSession, onSessionReset }) => {
       const isMovement = newLocation.notes === 'Session movement';
       setMarkers(prevMarkers => [...prevMarkers, { ...newLocation, isMovement }]);
       if (isMovement) {
-        setPath(prevPath => [...prevPath, [newLocation.lat, newLocation.lng]]);
+        pathRef.current = [...pathRef.current, [newLocation.lat, newLocation.lng]];
+        setPath(pathRef.current); // Update path state from ref
       }
     }
   }, [newLocation, markers]);

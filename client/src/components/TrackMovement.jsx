@@ -5,7 +5,6 @@ import "../styling/TrackMovement.css";
 const TrackMovement = ({ addLocation, setIsNewSession }) => {
   const [watchId, setWatchId] = useState(null);  // Store the geolocation watch ID
   const [error, setError] = useState(null);  // Track errors
-  const [path, setPathState] = useState([]);  // Local state to store the path
   const [lastLocation, setLastLocation] = useState(null);  // State to show last known location
   const [sessionId, setSessionId] = useState(null);  // State to track the current session
   const [loading, setLoading] = useState(false); // Track loading state
@@ -48,9 +47,8 @@ const TrackMovement = ({ addLocation, setIsNewSession }) => {
       setTracking(true);
       setLoading(false);
   
-      // Call the function prop to notify the parent about the new session
-      if (setIsNewSession) setIsNewSession(true);
-  
+      // Notify the parent about the new session
+      setIsNewSession(true);
       console.log('New session created:', newSessionId);
       return newSessionId;
     } catch (error) {
@@ -63,7 +61,6 @@ const TrackMovement = ({ addLocation, setIsNewSession }) => {
   const startTracking = async () => {
     setError(null);
     setLoading(true);
-    setPathState([]);  // Reset local path state
 
     const activeSessionId = await fetchOrCreateSession();
 
@@ -81,12 +78,13 @@ const TrackMovement = ({ addLocation, setIsNewSession }) => {
 
           saveMovement(locationData, activeSessionId);
           setLastLocation(`Lat: ${latitude}, Lng: ${longitude}`);
-          setPathState((prevPath) => [...prevPath, [latitude, longitude]]);
+          addLocation(locationData, true); // Update the parent component's path
         },
         (geoError) => handleError(new Error(`Geolocation error: ${geoError.message}`)),
         { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
       );
 
+      // Periodically fetch the current position every 15 seconds
       const intervalId = setInterval(() => {
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -95,7 +93,7 @@ const TrackMovement = ({ addLocation, setIsNewSession }) => {
 
             saveMovement(locationData, activeSessionId);
             setLastLocation(`Lat: ${latitude}, Lng: ${longitude}`);
-            setPathState((prevPath) => [...prevPath, [latitude, longitude]]);
+            addLocation(locationData, true); // Update the parent component's path
           },
           (geoError) => handleError(new Error(`Geolocation error: ${geoError.message}`)),
           { enableHighAccuracy: true }
@@ -130,8 +128,7 @@ const TrackMovement = ({ addLocation, setIsNewSession }) => {
         return;
       }
 
-      addLocation(movementData, true, true);
-      setPathState((prevPath) => [...prevPath, [movementData.lat, movementData.lng]]);
+      addLocation(movementData, true); // Update parent component
     } catch (error) {
       console.error('Error saving movement:', error);
       setError(error.response?.data.message || 'Failed to save movement due to a network error');
@@ -151,7 +148,7 @@ const TrackMovement = ({ addLocation, setIsNewSession }) => {
     setTracking(false);
   
     // Reset the session state in the parent component
-    if (setIsNewSession) setIsNewSession(false);
+    setIsNewSession(false);
   };
 
   // Clean up the geolocation watch and stop tracking when the component is unmounted
