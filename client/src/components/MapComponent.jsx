@@ -20,7 +20,6 @@ const RedIcon = L.icon({
 });
 
 // Set a blue marker icon for movements
-// Define the blue marker icon explicitly
 const BlueIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
@@ -103,7 +102,8 @@ const MapComponent = ({ newLocation, isNewSession, onSessionReset }) => {
   // Clear path when a new session starts
   useEffect(() => {
     if (isNewSession) {
-      setPath([]); // Clear the path
+      console.log('New session detected, clearing path...');
+      setPath([]); // Clear the path immediately
       if (onSessionReset) onSessionReset(); // Notify parent to reset session state
     }
   }, [isNewSession, onSessionReset]);
@@ -112,16 +112,6 @@ const MapComponent = ({ newLocation, isNewSession, onSessionReset }) => {
   useEffect(() => {
     fetchLocationsAndSessions();
   }, []); // Only run on initial render
-
-  // Log markers state after they are set
-  useEffect(() => {
-    console.log('Markers state:', markers); // Check if the markers state is correctly populated
-  }, [markers]);
-
-  // Log path state after it is set
-  useEffect(() => {
-    console.log('Path state:', path); // Check if the path state is correctly populated
-  }, [path]);
 
   // Add new marker when a new location is passed in
   useEffect(() => {
