@@ -30,7 +30,7 @@ const BlueIcon = L.icon({
   shadowSize: [41, 41],
 });
 
-const MapComponent = ({ newLocation }) => {
+const MapComponent = ({ newLocation, isNewSession, onSessionReset }) => {
   const [markers, setMarkers] = useState([]); // Initialize markers as an empty array
   const [path, setPath] = useState([]); // Initialize path state
   const [error, setError] = useState(null); // State to track errors
@@ -94,14 +94,19 @@ const MapComponent = ({ newLocation }) => {
       }));
 
       setMarkers([...locationMarkers, ...sessionMarkers]);
-
-      const pathCoordinates = sessionMarkers.map(marker => [marker.lat, marker.lng]);
-      setPath(pathCoordinates);
-
+      setPath(sessionMarkers.map(marker => [marker.lat, marker.lng]));
     } catch (error) {
-      console.error('Error fetching locations:', error);
+      handleError(error);
     }
   };
+
+  // Clear path when a new session starts
+  useEffect(() => {
+    if (isNewSession) {
+      setPath([]); // Clear the path
+      if (onSessionReset) onSessionReset(); // Notify parent to reset session state
+    }
+  }, [isNewSession, onSessionReset]);
 
   // Fetch locations and sessions when the component mounts
   useEffect(() => {
@@ -123,6 +128,9 @@ const MapComponent = ({ newLocation }) => {
     if (newLocation && newLocation._id && !markers.some(marker => marker._id === newLocation._id)) {
       const isMovement = newLocation.notes === 'Session movement';
       setMarkers(prevMarkers => [...prevMarkers, { ...newLocation, isMovement }]);
+      if (isMovement) {
+        setPath(prevPath => [...prevPath, [newLocation.lat, newLocation.lng]]);
+      }
     }
   }, [newLocation, markers]);
 
