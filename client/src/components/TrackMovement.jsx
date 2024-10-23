@@ -113,23 +113,20 @@ const TrackMovement = ({ addLocation, setIsNewSession }) => {
         setError('User not logged in. Please log in to track your movement.');
         return;
       }
-
+  
       const response = await axios.post(`${apiUrl}/api/session/${activeSessionId}/movement`, locationData, {
         headers: { 'x-auth-token': token },
       });
-
-      const { savedMovement, sortedMovements } = response.data;
-
-      if (!savedMovement._id) {
+  
+      const movementData = response.data;
+  
+      // Ensure the response contains an _id
+      if (!movementData._id) {
         setError('Failed to add movement: Missing movement ID.');
         return;
       }
-
-      // Update the path with the sorted movements
-      setPathState(sortedMovements.map(movement => [movement.lat, movement.lng]));
-
-      // Update the parent component with the latest saved movement
-      addLocation(savedMovement, true);
+  
+      addLocation(movementData, true); // Update the parent component
     } catch (error) {
       console.error('Error saving movement:', error);
       setError(error.response?.data.message || 'Failed to save movement due to a network error');

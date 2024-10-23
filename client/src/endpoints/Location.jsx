@@ -11,11 +11,10 @@ const LocationApp = () => {
   const [error, setError] = useState(null); // Track any errors
   const [path, setPath] = useState([]); // Track the path for movements
   const [loading, setLoading] = useState(true);
+  const [isNewSession, setIsNewSession] = useState(false);
 
   // Dynamically determine the backend URL based on environment
-  const apiUrl = import.meta.env.MODE === 'production' 
-    ? import.meta.env.VITE_PROD_BACKEND_URL 
-    : import.meta.env.VITE_BACKEND_URL;
+  const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
   // Utility function to get the JWT token
   const getToken = () => localStorage.getItem('token');
@@ -52,10 +51,9 @@ const LocationApp = () => {
         headers: { 'x-auth-token': token },
       });
   
-      // Safely check if response data is an array
       const locationsData = Array.isArray(locationResponse.data) ? locationResponse.data : [];
       setLocations(locationsData);
-      setError(null); // Clear any previous errors if successful
+      setError(null);
     } catch (error) {
       handleError(error);
     }
@@ -75,13 +73,12 @@ const LocationApp = () => {
         headers: { 'x-auth-token': token },
       });
 
-      // Safely check if response data is an array
       const sessionsData = Array.isArray(response.data) ? response.data : [];
       const pathCoordinates = sessionsData.flatMap(session =>
         Array.isArray(session.movements) ? session.movements.map(movement => [movement.lat, movement.lng]) : []
       );
       setPath(pathCoordinates);
-      setError(null); // Clear any previous errors if successful
+      setError(null);
     } catch (error) {
       handleError(error);
     }
@@ -101,7 +98,6 @@ const LocationApp = () => {
     if (!locationData._id) {
       setError('Failed to add location: Missing location ID.');
     } else {
-      // Check if the location already exists
       if (!locations.some(loc => loc._id === locationData._id)) {
         setLocations(prevLocations => [...prevLocations, locationData]);
         setNewLocation(locationData);
@@ -114,10 +110,8 @@ const LocationApp = () => {
     fetchLocationsAndSessions();
   }, []);
 
-  // Update locations dynamically when a new location is added
   useEffect(() => {
     if (newLocation) {
-      // Avoid duplicates
       if (!locations.some(loc => loc._id === newLocation._id)) {
         setLocations(prevLocations => [...prevLocations, newLocation]);
       }
@@ -130,7 +124,7 @@ const LocationApp = () => {
       <div className="controls">
         <TrackLocation addLocation={setNewLocation} />
 
-        <TrackMovement addLocation={setNewLocation} />
+        <TrackMovement addLocation={setNewLocation} setIsNewSession={setIsNewSession} />
       </div>
 
       {error && <div className="alert-danger">{error}</div>}

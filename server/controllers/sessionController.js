@@ -41,13 +41,13 @@ const saveMovement = async (req, res) => {
       return res.status(400).json({ message: 'Latitude and longitude are required' });
     }
 
-    // Fetch the current session based on sessionId
+    // Find the session by sessionId
     const session = await Session.findOne({ sessionId });
     if (!session) {
       return res.status(404).json({ message: 'Session not found' });
     }
 
-    // Create a new movement object
+    // Create a new movement subdocument
     const movement = {
       lat,
       lng,
@@ -55,17 +55,19 @@ const saveMovement = async (req, res) => {
       notes: notes || '',
     };
 
-    // Add the movement to the session's movements array
+    // Push to the movements array
     session.movements.push(movement);
     await session.save();
 
-    // Retrieve the latest movement added
+    // Get the saved movement with the generated _id
     const savedMovement = session.movements[session.movements.length - 1];
 
-    // Sort the session's movements by timestamp before returning
-    const sortedMovements = session.movements.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    // Ensure the movement has an _id before sending response
+    if (!savedMovement._id) {
+      return res.status(500).json({ message: 'Failed to add movement: Missing movement ID.' });
+    }
 
-    res.status(201).json({ savedMovement, sortedMovements });
+    res.status(201).json(savedMovement);
   } catch (error) {
     console.error('Error saving movement:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
