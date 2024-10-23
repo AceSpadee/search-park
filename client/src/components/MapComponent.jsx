@@ -1,5 +1,5 @@
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 import "../styling/MapComponent.css";
@@ -29,7 +29,7 @@ const BlueIcon = L.icon({
   shadowSize: [41, 41],
 });
 
-const MapComponent = ({ newLocation, isNewSession, onSessionReset }) => {
+const MapComponent = ({ newLocation, isNewSession, currentSessionId, onSessionReset }) => {
   const [markers, setMarkers] = useState([]); // Initialize markers as an empty array
   const [path, setPath] = useState([]); // Initialize path state
   const [error, setError] = useState(null); // State to track errors
@@ -101,15 +101,42 @@ const MapComponent = ({ newLocation, isNewSession, onSessionReset }) => {
     }
   };
 
+  // Fetch movements for a specific session
+  const fetchMovementsForSession = async (sessionId) => {
+    const token = getToken();
+    try {
+      const response = await axios.get(`${apiUrl}/api/session/${sessionId}`, {
+        headers: { 'x-auth-token': token },
+      });
+
+      const movements = response.data || [];
+
+      // Update markers and path only for the current session
+      const currentSessionMarkers = movements.map(movement => ({
+        lat: movement.lat,
+        lng: movement.lng,
+        isMovement: true,
+        _id: movement._id,
+      }));
+
+      setMarkers(currentSessionMarkers);
+      pathRef.current = movements.map(movement => [movement.lat, movement.lng]);
+      setPath(pathRef.current); // Update path with the current session's movements
+    } catch (error) {
+      console.error('Error fetching session movements:', error);
+      setError('Failed to fetch session movements.');
+    }
+  };
+
   // Clear path when a new session starts
   useEffect(() => {
-    if (isNewSession) {
-      console.log('New session detected, clearing path...');
-      pathRef.current = []; // Clear the path ref immediately
-      setPath([]); // Clear the path state
+    if (isNewSession && currentSessionId) {
+      pathRef.current = []; // Reset path ref
+      setPath([]); // Clear path state
+      fetchMovementsForSession(currentSessionId); // Fetch movements for the new session
       if (onSessionReset) onSessionReset(); // Notify parent to reset session state
     }
-  }, [isNewSession, onSessionReset]);
+  }, [isNewSession, currentSessionId, onSessionReset]);
 
   // Fetch locations and sessions when the component mounts
   useEffect(() => {
@@ -121,9 +148,10 @@ const MapComponent = ({ newLocation, isNewSession, onSessionReset }) => {
     if (newLocation && newLocation._id && !markers.some(marker => marker._id === newLocation._id)) {
       const isMovement = newLocation.notes === 'Session movement';
       setMarkers(prevMarkers => [...prevMarkers, { ...newLocation, isMovement }]);
+      
+      // Update the path with the new location
       if (isMovement) {
-        pathRef.current = [...pathRef.current, [newLocation.lat, newLocation.lng]];
-        setPath(pathRef.current); // Update path state from ref
+        setPath(prevPath => [...prevPath, [newLocation.lat, newLocation.lng]]);
       }
     }
   }, [newLocation, markers]);
@@ -164,12 +192,12 @@ const MapComponent = ({ newLocation, isNewSession, onSessionReset }) => {
   const handleDeleteMarker = async (index) => {
     const token = getToken(); // Get the JWT token
     const locationId = markers[index]._id;
-  
+
     try {
       const response = await axios.delete(`${apiUrl}/api/location/${locationId}`, {
         headers: { 'x-auth-token': token },
       });
-  
+
       if (response.status === 200) {
         setMarkers(prevMarkers => prevMarkers.filter((_, i) => i !== index));
         console.log(`Marker with ID (${locationId}) deleted successfully from the database.`);

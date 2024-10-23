@@ -29,7 +29,7 @@ const TrackMovement = ({ addLocation, setIsNewSession }) => {
         console.log('Tracking is already active. Using the existing session:', sessionId);
         return sessionId;
       }
-  
+
       setLoading(true);
       const token = getToken();
       if (!token) {
@@ -37,16 +37,16 @@ const TrackMovement = ({ addLocation, setIsNewSession }) => {
         setLoading(false);
         return null;
       }
-  
+
       const response = await axios.post(`${apiUrl}/api/session/start`, {}, {
         headers: { 'x-auth-token': token },
       });
-  
+
       const newSessionId = response.data.sessionId;
       setSessionId(newSessionId);
       setTracking(true);
       setLoading(false);
-  
+
       // Notify the parent about the new session
       setIsNewSession(true);
       console.log('New session created:', newSessionId);
@@ -60,13 +60,10 @@ const TrackMovement = ({ addLocation, setIsNewSession }) => {
   // Function to start tracking the user's movement
   const startTracking = async () => {
     setError(null);
-    setLoading(true);
 
     const activeSessionId = await fetchOrCreateSession();
-
     if (!activeSessionId) {
       setError('Failed to start tracking. No session found.');
-      setLoading(false);
       return;
     }
 
@@ -121,14 +118,18 @@ const TrackMovement = ({ addLocation, setIsNewSession }) => {
         headers: { 'x-auth-token': token },
       });
 
-      const movementData = response.data;
+      const { savedMovement, sortedMovements } = response.data;
 
-      if (!movementData._id) {
+      if (!savedMovement._id) {
         setError('Failed to add movement: Missing movement ID.');
         return;
       }
 
-      addLocation(movementData, true); // Update parent component
+      // Update the path with the sorted movements
+      setPathState(sortedMovements.map(movement => [movement.lat, movement.lng]));
+
+      // Update the parent component with the latest saved movement
+      addLocation(savedMovement, true);
     } catch (error) {
       console.error('Error saving movement:', error);
       setError(error.response?.data.message || 'Failed to save movement due to a network error');
@@ -143,10 +144,10 @@ const TrackMovement = ({ addLocation, setIsNewSession }) => {
       setWatchId(null);
       setError('Tracking stopped.');
     }
-  
+
     setSessionId(null);
     setTracking(false);
-  
+
     // Reset the session state in the parent component
     setIsNewSession(false);
   };
