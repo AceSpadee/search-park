@@ -108,9 +108,9 @@ const MapComponent = ({ newLocation, isNewSession, currentSessionId, onSessionRe
       const response = await axios.get(`${apiUrl}/api/session/${sessionId}`, {
         headers: { 'x-auth-token': token },
       });
-
+  
       const movements = response.data || [];
-
+  
       // Update markers and path only for the current session
       const currentSessionMarkers = movements.map(movement => ({
         lat: movement.lat,
@@ -118,7 +118,7 @@ const MapComponent = ({ newLocation, isNewSession, currentSessionId, onSessionRe
         isMovement: true,
         _id: movement._id,
       }));
-
+  
       setMarkers(currentSessionMarkers);
       pathRef.current = movements.map(movement => [movement.lat, movement.lng]);
       setPath(pathRef.current); // Update path with the current session's movements
@@ -131,8 +131,8 @@ const MapComponent = ({ newLocation, isNewSession, currentSessionId, onSessionRe
   // Clear path when a new session starts
   useEffect(() => {
     if (isNewSession && currentSessionId) {
-      pathRef.current = []; // Reset path ref
-      setPath([]); // Clear path state
+      setPath([]); // Clear the current path
+      pathRef.current = []; // Reset the reference
       fetchMovementsForSession(currentSessionId); // Fetch movements for the new session
       if (onSessionReset) onSessionReset(); // Notify parent to reset session state
     }
@@ -151,7 +151,8 @@ const MapComponent = ({ newLocation, isNewSession, currentSessionId, onSessionRe
       
       // Update the path with the new location
       if (isMovement) {
-        setPath(prevPath => [...prevPath, [newLocation.lat, newLocation.lng]]);
+        pathRef.current = [...pathRef.current, [newLocation.lat, newLocation.lng]];
+        setPath([...pathRef.current]); // Sync with the state
       }
     }
   }, [newLocation, markers]);
