@@ -30,10 +30,10 @@ const BlueIcon = L.icon({
 });
 
 const MapComponent = ({ newLocation, isNewSession, currentSessionId, onSessionReset }) => {
-  const [markers, setMarkers] = useState([]); // Initialize markers as an empty array
-  const [path, setPath] = useState([]); // Initialize path state
-  const [error, setError] = useState(null); // State to track errors
-  const pathRef = useRef([]); // Ref to store the path state for immediate resets
+  const [markers, setMarkers] = useState([]); 
+  const [path, setPath] = useState([]); 
+  const [error, setError] = useState(null);
+  const pathRef = useRef([]);
 
   // Dynamically determine the backend URL based on environment
   const apiUrl = import.meta.env.MODE === 'production'
@@ -102,41 +102,39 @@ const MapComponent = ({ newLocation, isNewSession, currentSessionId, onSessionRe
   };
 
   // Fetch movements for a specific session
-  const fetchMovementsForSession = async (sessionId) => {
+   const fetchMovementsForSession = async (sessionId) => {
     const token = getToken();
     try {
       const response = await axios.get(`${apiUrl}/api/session/${sessionId}`, {
         headers: { 'x-auth-token': token },
       });
-  
       const movements = response.data || [];
-  
-      // Update markers and path only for the current session
-      const currentSessionMarkers = movements.map(movement => ({
+
+      const sessionMarkers = movements.map(movement => ({
         lat: movement.lat,
         lng: movement.lng,
         isMovement: true,
         _id: movement._id,
       }));
-  
-      setMarkers(currentSessionMarkers);
+
+      setMarkers(sessionMarkers);
       pathRef.current = movements.map(movement => [movement.lat, movement.lng]);
-      setPath(pathRef.current); // Update path with the current session's movements
+      setPath(pathRef.current); 
     } catch (error) {
-      console.error('Error fetching session movements:', error);
-      setError('Failed to fetch session movements.');
+      handleError(error);
     }
   };
 
   // Clear path when a new session starts
   useEffect(() => {
     if (isNewSession && currentSessionId) {
-      setPath([]); // Clear the current path
-      pathRef.current = []; // Reset the reference
-      fetchMovementsForSession(currentSessionId); // Fetch movements for the new session
-      if (onSessionReset) onSessionReset(); // Notify parent to reset session state
+      pathRef.current = [];
+      setPath([]); 
+      fetchMovementsForSession(currentSessionId); 
+      if (onSessionReset) onSessionReset();
     }
   }, [isNewSession, currentSessionId, onSessionReset]);
+
 
   // Fetch locations and sessions when the component mounts
   useEffect(() => {
@@ -148,11 +146,10 @@ const MapComponent = ({ newLocation, isNewSession, currentSessionId, onSessionRe
     if (newLocation && newLocation._id && !markers.some(marker => marker._id === newLocation._id)) {
       const isMovement = newLocation.notes === 'Session movement';
       setMarkers(prevMarkers => [...prevMarkers, { ...newLocation, isMovement }]);
-      
-      // Update the path with the new location
+
       if (isMovement) {
         pathRef.current = [...pathRef.current, [newLocation.lat, newLocation.lng]];
-        setPath([...pathRef.current]); // Sync with the state
+        setPath([...pathRef.current]); 
       }
     }
   }, [newLocation, markers]);
