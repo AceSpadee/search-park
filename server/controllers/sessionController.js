@@ -41,13 +41,11 @@ const saveMovement = async (req, res) => {
       return res.status(400).json({ message: 'Latitude and longitude are required' });
     }
 
-    // Find the session by sessionId
     const session = await Session.findOne({ sessionId });
     if (!session) {
       return res.status(404).json({ message: 'Session not found' });
     }
 
-    // Create a new movement subdocument
     const movement = {
       lat,
       lng,
@@ -55,18 +53,10 @@ const saveMovement = async (req, res) => {
       notes: notes || '',
     };
 
-    // Push to the movements array
     session.movements.push(movement);
     await session.save();
 
-    // Get the saved movement with the generated _id
     const savedMovement = session.movements[session.movements.length - 1];
-
-    // Ensure the movement has an _id before sending response
-    if (!savedMovement._id) {
-      return res.status(500).json({ message: 'Failed to add movement: Missing movement ID.' });
-    }
-
     res.status(201).json(savedMovement);
   } catch (error) {
     console.error('Error saving movement:', error);
@@ -99,25 +89,19 @@ const stopSession = async (req, res) => {
 const getMovements = async (req, res) => {
   try {
     const { sessionId } = req.params;
-
-    // If sessionId is provided, return movements only for that session
     if (sessionId) {
       const session = await Session.findOne({ sessionId });
       if (!session) {
         return res.status(404).json({ message: 'Session not found' });
       }
-      
-      // Sort movements by timestamp before sending
-      const sortedMovements = session.movements.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-      return res.status(200).json(sortedMovements);
+      return res.status(200).json(session.movements);
     }
 
     // Get all sessions for the authenticated user and extract movements
     const sessions = await Session.find({ user: req.user.id });
-
-    // Collect movements from all sessions and sort by timestamp
     const movements = sessions.flatMap(session => session.movements);
+
+    // Optionally sort movements by timestamp
     movements.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
     res.status(200).json(movements);

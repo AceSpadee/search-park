@@ -1,5 +1,5 @@
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 import "../styling/MapComponent.css";
@@ -20,6 +20,7 @@ const RedIcon = L.icon({
 });
 
 // Set a blue marker icon for movements
+// Define the blue marker icon explicitly
 const BlueIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
@@ -29,11 +30,10 @@ const BlueIcon = L.icon({
   shadowSize: [41, 41],
 });
 
-const MapComponent = ({ newLocation, isNewSession, currentSessionId, onSessionReset }) => {
-  const [markers, setMarkers] = useState([]); 
-  const [path, setPath] = useState([]); 
-  const [error, setError] = useState(null);
-  const pathRef = useRef([]);
+const MapComponent = ({ newLocation }) => {
+  const [markers, setMarkers] = useState([]); // Initialize markers as an empty array
+  const [path, setPath] = useState([]); // Initialize path state
+  const [error, setError] = useState(null); // State to track errors
 
   // Dynamically determine the backend URL based on environment
   const apiUrl = import.meta.env.MODE === 'production'
@@ -94,63 +94,35 @@ const MapComponent = ({ newLocation, isNewSession, currentSessionId, onSessionRe
       }));
 
       setMarkers([...locationMarkers, ...sessionMarkers]);
-      pathRef.current = sessionMarkers.map(marker => [marker.lat, marker.lng]);
-      setPath(pathRef.current); // Set path to match ref
+
+      const pathCoordinates = sessionMarkers.map(marker => [marker.lat, marker.lng]);
+      setPath(pathCoordinates);
+
     } catch (error) {
-      handleError(error);
+      console.error('Error fetching locations:', error);
     }
   };
-
-  // Fetch movements for a specific session
-   const fetchMovementsForSession = async (sessionId) => {
-    const token = getToken();
-    try {
-      const response = await axios.get(`${apiUrl}/api/session/${sessionId}`, {
-        headers: { 'x-auth-token': token },
-      });
-      const movements = response.data || [];
-
-      const sessionMarkers = movements.map(movement => ({
-        lat: movement.lat,
-        lng: movement.lng,
-        isMovement: true,
-        _id: movement._id,
-      }));
-
-      setMarkers(sessionMarkers);
-      pathRef.current = movements.map(movement => [movement.lat, movement.lng]);
-      setPath(pathRef.current); 
-    } catch (error) {
-      handleError(error);
-    }
-  };
-
-  // Clear path when a new session starts
-  useEffect(() => {
-    if (isNewSession && currentSessionId) {
-      pathRef.current = [];
-      setPath([]); 
-      fetchMovementsForSession(currentSessionId); 
-      if (onSessionReset) onSessionReset();
-    }
-  }, [isNewSession, currentSessionId, onSessionReset]);
-
 
   // Fetch locations and sessions when the component mounts
   useEffect(() => {
     fetchLocationsAndSessions();
   }, []); // Only run on initial render
 
+  // Log markers state after they are set
+  useEffect(() => {
+    console.log('Markers state:', markers); // Check if the markers state is correctly populated
+  }, [markers]);
+
+  // Log path state after it is set
+  useEffect(() => {
+    console.log('Path state:', path); // Check if the path state is correctly populated
+  }, [path]);
+
   // Add new marker when a new location is passed in
   useEffect(() => {
     if (newLocation && newLocation._id && !markers.some(marker => marker._id === newLocation._id)) {
       const isMovement = newLocation.notes === 'Session movement';
       setMarkers(prevMarkers => [...prevMarkers, { ...newLocation, isMovement }]);
-
-      if (isMovement) {
-        pathRef.current = [...pathRef.current, [newLocation.lat, newLocation.lng]];
-        setPath([...pathRef.current]); 
-      }
     }
   }, [newLocation, markers]);
 
@@ -190,12 +162,12 @@ const MapComponent = ({ newLocation, isNewSession, currentSessionId, onSessionRe
   const handleDeleteMarker = async (index) => {
     const token = getToken(); // Get the JWT token
     const locationId = markers[index]._id;
-
+  
     try {
       const response = await axios.delete(`${apiUrl}/api/location/${locationId}`, {
         headers: { 'x-auth-token': token },
       });
-
+  
       if (response.status === 200) {
         setMarkers(prevMarkers => prevMarkers.filter((_, i) => i !== index));
         console.log(`Marker with ID (${locationId}) deleted successfully from the database.`);
