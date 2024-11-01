@@ -128,9 +128,9 @@ const LocationApp = () => {
     <div className="location-app">
 
       <div className="controls">
-        <TrackLocation addLocation={setNewLocation} />
-
-        <TrackMovement addLocation={setNewLocation} />
+        <TrackLocation addLocation={addLocation} />
+        
+        <TrackMovement addLocation={addLocation} />
       </div>
 
       {error && <div className="alert-danger">{error}</div>}

@@ -32,7 +32,7 @@ const BlueIcon = L.icon({
 
 const MapComponent = ({ newLocation }) => {
   const [markers, setMarkers] = useState([]); // Initialize markers as an empty array
-  const [path, setPath] = useState([]); // Initialize path state
+  const [sessionPaths, setSessionPaths] = useState([]); // Add sessionPaths state
   const [error, setError] = useState(null); // State to track errors
 
   // Dynamically determine the backend URL based on environment
@@ -68,38 +68,57 @@ const MapComponent = ({ newLocation }) => {
       setError('User not logged in. Please log in to see your locations.');
       return;
     }
-
+  
     try {
       const locationResponse = await axios.get(`${apiUrl}/api/location`, {
         headers: { 'x-auth-token': token },
       });
-
+  
       const sessionResponse = await axios.get(`${apiUrl}/api/session`, {
         headers: { 'x-auth-token': token },
       });
-
+  
       const locationsData = Array.isArray(locationResponse.data) ? locationResponse.data : [];
       const sessionsData = Array.isArray(sessionResponse.data) ? sessionResponse.data : [];
-
-      const sessionMarkers = sessionsData.map(movement => ({
-        lat: movement.lat,
-        lng: movement.lng,
-        isMovement: true,
-        _id: movement._id || `session-${movement.timestamp}`,
-      }));
-
+  
+      console.log("Locations Data:", locationsData);
+      console.log("Sessions Data:", sessionsData);
+  
+      // Process location markers (static locations)
       const locationMarkers = locationsData.map(loc => ({
         ...loc,
         isMovement: false,
       }));
-
+  
+      // Create markers from sessions data
+      const sessionMarkers = sessionsData.map(session => ({
+        lat: session.lat,
+        lng: session.lng,
+        isMovement: true,
+        _id: session._id || `session-${session.timestamp}`,
+      }));
+  
+      // Group session paths by sessionId or timestamp (unique identifier per session)
+      const groupedSessions = sessionsData.reduce((acc, movement) => {
+        const sessionId = movement.sessionId; // Or use timestamp if sessions lack a sessionId
+        if (!acc[sessionId]) acc[sessionId] = [];
+        acc[sessionId].push([movement.lat, movement.lng]);
+        return acc;
+      }, {});
+  
+      // Convert grouped sessions to an array of arrays
+      const sessionPathsData = Object.values(groupedSessions);
+  
+      // Set markers and paths for the map
       setMarkers([...locationMarkers, ...sessionMarkers]);
-
-      const pathCoordinates = sessionMarkers.map(marker => [marker.lat, marker.lng]);
-      setPath(pathCoordinates);
-
+      setSessionPaths(sessionPathsData);
+  
+      console.log("Markers after setting:", [...locationMarkers, ...sessionMarkers]);
+      console.log("Session Paths after setting:", sessionPathsData);
+  
     } catch (error) {
       console.error('Error fetching locations:', error);
+      setError('Error fetching locations. Please try again later.');
     }
   };
 
@@ -112,11 +131,6 @@ const MapComponent = ({ newLocation }) => {
   useEffect(() => {
     console.log('Markers state:', markers); // Check if the markers state is correctly populated
   }, [markers]);
-
-  // Log path state after it is set
-  useEffect(() => {
-    console.log('Path state:', path); // Check if the path state is correctly populated
-  }, [path]);
 
   // Add new marker when a new location is passed in
   useEffect(() => {
@@ -180,49 +194,45 @@ const MapComponent = ({ newLocation }) => {
   return (
     <div className="map-container">
       {error && <div className="alert-danger">{error}</div>}
-      <div className="card">
-        <div className="card-header">
-          <h5>Locations</h5>
-        </div>
-        <div className="card-body">
-          <MapContainer center={[45.6280, -122.6739]} zoom={12} style={{ height: '650px', width: '100%' }} preferCanvas={true}>
-            <TileLayer
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-              attribution="Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA"
-            />
-            
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors"
-              opacity={0.4}
-            />
+      <MapContainer center={[45.6280, -122.6739]} zoom={12} style={{ height: '650px', width: '100%' }} preferCanvas={true}>
+        <TileLayer
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          attribution="Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA"
+        />
+        
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap contributors"
+          opacity={0.4}
+        />
 
-            {markers.filter(marker => !marker.isMovement).map((marker, index) => (
-              <Marker
-                key={marker._id || index}
-                position={[marker.lat, marker.lng]}
-                icon={RedIcon}
-                draggable={true}
-                eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}
+        {markers.filter(marker => !marker.isMovement).map((marker, index) => (
+          <Marker
+            key={marker._id || index}
+            position={[marker.lat, marker.lng]}
+            icon={RedIcon}
+            draggable={true}
+            eventHandlers={{ dragend: (event) => handleMarkerDragEnd(event, index) }}
+          >
+            <Popup>
+              {marker.notes || 'No notes for this location'}
+              <br />
+              <button 
+                className="btn btn-danger btn-sm mt-2" 
+                onClick={() => handleDeleteMarker(index)}
               >
-                <Popup>
-                  {marker.notes || 'No notes for this location'}
-                  <br />
-                  <button 
-                    className="btn btn-danger btn-sm mt-2" 
-                    onClick={() => handleDeleteMarker(index)}
-                  >
-                    Delete Marker
-                  </button>
-                </Popup>
-              </Marker>
-            ))}
+                Delete Marker
+              </button>
+            </Popup>
+          </Marker>
+        ))}
 
-            <CustomMarkerCluster markers={markers.filter(marker => marker.isMovement)} blueIcon={BlueIcon} />
-            {path.length > 1 && <Polyline positions={path} color="blue" />}
-          </MapContainer>
-        </div>
-      </div>
+        <CustomMarkerCluster markers={markers.filter(marker => marker.isMovement)} blueIcon={BlueIcon} />
+
+        {sessionPaths.map((sessionPath, index) => (
+          <Polyline key={index} positions={sessionPath} color="blue" />
+        ))}
+      </MapContainer>
     </div>
   );
 };
