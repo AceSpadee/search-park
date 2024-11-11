@@ -6,141 +6,179 @@ import MapComponent from '../components/MapComponent';
 import "../styling/Location.css";
 
 const LocationApp = () => {
-  const [locations, setLocations] = useState([]); // Store user's locations
-  const [newLocation, setNewLocation] = useState(null); // Track the newly added location
-  const [error, setError] = useState(null); // Track any errors
-  const [path, setPath] = useState([]); // Track the path for movements
+  const [locations, setLocations] = useState([]); // Initialize as an empty array
+  const [currentPosition, setCurrentPosition] = useState(null);
+  const [sessionPaths, setSessionPaths] = useState([]); // Initialize as an empty array
+  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Dynamically determine the backend URL based on environment
-  const apiUrl = import.meta.env.MODE === 'production' 
-    ? import.meta.env.VITE_PROD_BACKEND_URL 
+  const apiUrl = import.meta.env.MODE === 'production'
+    ? import.meta.env.VITE_PROD_BACKEND_URL
     : import.meta.env.VITE_BACKEND_URL;
 
-  // Utility function to get the JWT token
   const getToken = () => localStorage.getItem('token');
 
-  // Function to handle errors
   const handleError = (error) => {
-    if (error.response) {
-      if (error.response.status === 401) {
-        setError('Authentication failed. Please log in again.');
-      } else if (error.response.status === 500) {
-        setError('Server error occurred. Please try again later.');
-      } else {
-        setError(`Failed to load locations: ${error.response.data.message || 'Unknown error'}`);
-      }
-    } else if (error.request) {
-      setError('No response from server. Please check your internet connection.');
-    } else {
-      setError(`Unexpected error: ${error.message}`);
-    }
-    console.error('Error fetching locations:', error);
+    console.error('Error:', error);
+    setError(error?.message || 'An unexpected error occurred.');
   };
 
-  // Function to fetch saved locations
   const fetchLocations = async () => {
     const token = getToken();
     if (!token) {
-      setError('User not logged in. Please log in to see your locations.');
+      handleError(new Error('User not logged in.'));
       setLoading(false);
       return;
     }
-  
+
     try {
-      const locationResponse = await axios.get(`${apiUrl}/api/location`, {
+      const response = await axios.get(`${apiUrl}/api/location`, {
         headers: { 'x-auth-token': token },
       });
-  
-      // Safely check if response data is an array
-      const locationsData = Array.isArray(locationResponse.data) ? locationResponse.data : [];
-      setLocations(locationsData);
-      setError(null); // Clear any previous errors if successful
+
+      setLocations(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       handleError(error);
     }
   };
 
-  // Function to fetch saved sessions and movements
   const fetchSessions = async () => {
     const token = getToken();
     if (!token) {
-      setError('User not logged in. Please log in to see your movements.');
-      setLoading(false);
+      handleError(new Error('User not logged in.'));
+      setLoadingSessions(false);
+      return;
+    }
+  
+    try {
+      setLoadingSessions(true);
+  
+      // Fetch sessions with grouped movements
+      const response = await axios.get(`${apiUrl}/api/session`, {
+        headers: { 'x-auth-token': token },
+      });
+  
+      const sessionsData = Array.isArray(response.data) ? response.data : [];
+      console.log('Fetched session data:', sessionsData);
+  
+      // Map movements into session paths
+      const paths = sessionsData.map((session) =>
+        session.movements.map((movement) => [movement.lat, movement.lng])
+      );
+  
+      setSessionPaths(paths);
+      console.log('Session paths updated:', paths);
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setLoadingSessions(false);
+    }
+  };
+
+  console.log('Updated sessionPaths in LocationApp:', sessionPaths);
+
+  const fetchLocationsAndSessions = async () => {
+    setLoading(true);
+    await Promise.all([fetchLocations(), fetchSessions()]);
+    setLoading(false);
+  };
+
+  const addLocation = (newLocation) => {
+    if (!newLocation || !newLocation._id) {
+      handleError(new Error('Invalid location data.'));
+      return;
+    }
+
+    setLocations((prev) => [...prev, newLocation]);
+  };
+
+  const handleDeleteLocation = async (index) => {
+    const token = getToken();
+    const locationId = locations[index]?._id;
+
+    if (!locationId) {
+      handleError(new Error('Invalid location ID.'));
       return;
     }
 
     try {
-      const response = await axios.get(`${apiUrl}/api/session`, {
+      await axios.delete(`${apiUrl}/api/location/${locationId}`, {
         headers: { 'x-auth-token': token },
       });
-
-      // Safely check if response data is an array
-      const sessionsData = Array.isArray(response.data) ? response.data : [];
-      const pathCoordinates = sessionsData.flatMap(session =>
-        Array.isArray(session.movements) ? session.movements.map(movement => [movement.lat, movement.lng]) : []
-      );
-      setPath(pathCoordinates);
-      setError(null); // Clear any previous errors if successful
+      setLocations((prev) => prev.filter((_, i) => i !== index));
     } catch (error) {
       handleError(error);
     }
   };
 
-  // Function to fetch both locations and sessions
-  const fetchLocationsAndSessions = async () => {
-    setLoading(true);
-    await fetchLocations();
-    await fetchSessions();
-    setLoading(false);
-  };
+  const handleDragMarker = async (event, index) => {
+    const newPosition = event.target.getLatLng();
+    const token = getToken();
+    const locationId = locations[index]?._id;
 
-  // Function to add a new location to the state
-  const addLocation = (newLocation) => {
-    const locationData = newLocation.location ? newLocation.location : newLocation;
-    if (!locationData._id) {
-      setError('Failed to add location: Missing location ID.');
-    } else {
-      // Check if the location already exists
-      if (!locations.some(loc => loc._id === locationData._id)) {
-        setLocations(prevLocations => [...prevLocations, locationData]);
-        setNewLocation(locationData);
-      }
+    if (!locationId) {
+      handleError(new Error('Invalid location ID.'));
+      return;
+    }
+
+    try {
+      await axios.put(`${apiUrl}/api/location/${locationId}`, {
+        newLat: newPosition.lat,
+        newLng: newPosition.lng,
+      }, {
+        headers: { 'x-auth-token': token },
+      });
+
+      setLocations((prev) => {
+        const updated = [...prev];
+        updated[index] = { ...updated[index], lat: newPosition.lat, lng: newPosition.lng };
+        return updated;
+      });
+    } catch (error) {
+      handleError(error);
     }
   };
 
-  // Fetch locations and sessions when the component mounts
   useEffect(() => {
     fetchLocationsAndSessions();
   }, []);
 
-  // Update locations dynamically when a new location is added
-  useEffect(() => {
-    if (newLocation) {
-      // Avoid duplicates
-      if (!locations.some(loc => loc._id === newLocation._id)) {
-        setLocations(prevLocations => [...prevLocations, newLocation]);
-      }
-    }
-  }, [newLocation]);
-
   return (
     <div className="location-app">
+      {loading && <div className="loading-spinner">Loading...</div>} {/* Display loading spinner */}
 
       <div className="controls">
-        <TrackLocation addLocation={setNewLocation} />
-
-        <TrackMovement addLocation={setNewLocation} />
+        <TrackLocation addLocation={addLocation} />
+        <TrackMovement
+          updateMap={({ currentPosition: pos, path }) => {
+            console.log('Path received in LocationApp:', path); // Debugging log
+            setCurrentPosition(pos);
+            setSessionPaths((prevPaths) => {
+              const updatedPaths = [...prevPaths];
+              updatedPaths[updatedPaths.length - 1] = path; // Update the last session path
+              console.log('Updated sessionPaths in LocationApp:', updatedPaths); // Debugging log
+              return updatedPaths;
+            });
+          }}
+        />
       </div>
 
       {error && <div className="alert-danger">{error}</div>}
 
-      <div className="map-wrapper">
-        <MapComponent locations={locations} newLocation={newLocation} path={path} />
-      </div>
+      {!loading && (
+        <div className="map-wrapper">
+          <MapComponent
+            currentPosition={currentPosition}
+            sessionPaths={sessionPaths || []} // Ensure array
+            savedLocations={locations || []} // Ensure array
+            onDeleteLocation={handleDeleteLocation} // Pass delete handler
+            onDragMarker={handleDragMarker} // Pass drag handler
+          />
+        </div>
+      )}
     </div>
   );
 };
-
 
 export default LocationApp;
