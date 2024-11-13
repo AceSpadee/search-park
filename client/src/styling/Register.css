@@ -52,3 +52,29 @@
     background-color: var(--error-bg-color);
     border-color: var(--error-border-color);
   }
+
+  /* Mobile Responsiveness */
+  @media (max-width: 768px) {
+    .register-container {
+      padding: 20px; /* Reduce padding for smaller screens */
+    }
+
+    .register-form {
+      padding: 15px; /* Reduce padding inside the form */
+    }
+
+    .form-control {
+      font-size: 14px; /* Adjust font size for mobile */
+      padding: 8px; /* Reduce padding for compact fields */
+    }
+
+    .register-container .btn-register {
+      font-size: 14px; /* Adjust button font size for smaller screens */
+      padding: 10px; /* Reduce padding for compact layout */
+    }
+
+    .register-container .error-message {
+      font-size: 12px; /* Adjust error message font size */
+      padding: 8px; /* Compact padding for error message */
+    }
+  }
