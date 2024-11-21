@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '../utils/axios';
 import "../styling/TrackMovement.css";
 
 const TrackMovement = ({ updateMap }) => {
@@ -12,13 +12,6 @@ const TrackMovement = ({ updateMap }) => {
   const [tracking, setTracking] = useState(false);
 
   const intervalRef = useRef(null); // To track the interval ID
-
-  const isProduction = import.meta.env.MODE === 'production';
-  const apiUrl = isProduction
-    ? import.meta.env.VITE_PROD_BACKEND_URL
-    : import.meta.env.VITE_BACKEND_URL;
-
-  const getToken = () => localStorage.getItem('token');
 
   const handleError = (error) => {
     setError(error.message || 'Error tracking movement');
@@ -34,16 +27,8 @@ const TrackMovement = ({ updateMap }) => {
       }
 
       setLoading(true);
-      const token = getToken();
-      if (!token) {
-        setError('User not logged in. Please log in to start tracking.');
-        setLoading(false);
-        return null;
-      }
 
-      const response = await axios.post(`${apiUrl}/api/session/start`, {}, {
-        headers: { 'x-auth-token': token },
-      });
+      const response = await api.post(`/api/session/start`); // No need to attach the token manually
 
       const newSessionId = response.data.sessionId;
       setSessionId(newSessionId);
@@ -61,18 +46,7 @@ const TrackMovement = ({ updateMap }) => {
     try {
       console.log('Saving movement:', locationData);
 
-      const token = getToken();
-      if (!token) {
-        throw new Error('User not logged in. Please log in to track your movement.');
-      }
-
-      await axios.post(
-        `${apiUrl}/api/session/${activeSessionId}/movement`,
-        locationData,
-        {
-          headers: { 'x-auth-token': token },
-        }
-      );
+      await api.post(`/api/session/${activeSessionId}/movement`, locationData);
 
       console.log('Movement saved successfully:', locationData);
     } catch (error) {

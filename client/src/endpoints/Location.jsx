@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/axios'
 import TrackLocation from '../components/TrackLocation';
 import TrackMovement from '../components/TrackMovement';
 import MapComponent from '../components/MapComponent';
@@ -13,30 +13,14 @@ const LocationApp = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const apiUrl = import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_PROD_BACKEND_URL
-    : import.meta.env.VITE_BACKEND_URL;
-
-  const getToken = () => localStorage.getItem('token');
-
   const handleError = (error) => {
     console.error('Error:', error);
     setError(error?.message || 'An unexpected error occurred.');
   };
 
   const fetchLocations = async () => {
-    const token = getToken();
-    if (!token) {
-      handleError(new Error('User not logged in.'));
-      setLoading(false);
-      return;
-    }
-
     try {
-      const response = await axios.get(`${apiUrl}/api/location`, {
-        headers: { 'x-auth-token': token },
-      });
-
+      const response = await api.get('/api/location');
       setLocations(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       handleError(error);
@@ -44,29 +28,20 @@ const LocationApp = () => {
   };
 
   const fetchSessions = async () => {
-    const token = getToken();
-    if (!token) {
-      handleError(new Error('User not logged in.'));
-      setLoadingSessions(false);
-      return;
-    }
-  
     try {
       setLoadingSessions(true);
-  
+
       // Fetch sessions with grouped movements
-      const response = await axios.get(`${apiUrl}/api/session`, {
-        headers: { 'x-auth-token': token },
-      });
-  
+      const response = await api.get('/api/session');
+
       const sessionsData = Array.isArray(response.data) ? response.data : [];
       console.log('Fetched session data:', sessionsData);
-  
+
       // Map movements into session paths
       const paths = sessionsData.map((session) =>
         session.movements.map((movement) => [movement.lat, movement.lng])
       );
-  
+
       setSessionPaths(paths);
       console.log('Session paths updated:', paths);
     } catch (error) {
@@ -94,7 +69,6 @@ const LocationApp = () => {
   };
 
   const handleDeleteLocation = async (index) => {
-    const token = getToken();
     const locationId = locations[index]?._id;
 
     if (!locationId) {
@@ -103,9 +77,7 @@ const LocationApp = () => {
     }
 
     try {
-      await axios.delete(`${apiUrl}/api/location/${locationId}`, {
-        headers: { 'x-auth-token': token },
-      });
+      await api.delete(`/api/location/${locationId}`);
       setLocations((prev) => prev.filter((_, i) => i !== index));
     } catch (error) {
       handleError(error);
@@ -114,7 +86,6 @@ const LocationApp = () => {
 
   const handleDragMarker = async (event, index) => {
     const newPosition = event.target.getLatLng();
-    const token = getToken();
     const locationId = locations[index]?._id;
 
     if (!locationId) {
@@ -123,11 +94,9 @@ const LocationApp = () => {
     }
 
     try {
-      await axios.put(`${apiUrl}/api/location/${locationId}`, {
+      await api.put(`/api/location/${locationId}`, {
         newLat: newPosition.lat,
         newLng: newPosition.lng,
-      }, {
-        headers: { 'x-auth-token': token },
       });
 
       setLocations((prev) => {

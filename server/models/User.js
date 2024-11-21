@@ -32,6 +32,11 @@ const userSchema = new mongoose.Schema({
       ref: 'Session', // Reference to the Session model
     }
   ],
+  // Add refreshToken field
+  refreshToken: {
+    type: String,
+    default: null, // Set to null initially, updated during login
+  },
 }, { versionKey: false });
 
 // Pre-save hook to hash the password before saving

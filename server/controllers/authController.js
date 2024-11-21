@@ -1,52 +1,57 @@
-// Import necessary libraries and modules
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
 
+// Function to generate an access token
+const generateAccessToken = (userId) => {
+  return jwt.sign({ user: { id: userId } }, process.env.JWT_SECRET, { expiresIn: '1h' });
+};
+
+// Function to generate a refresh token
+const generateRefreshToken = (userId) => {
+  return jwt.sign({ user: { id: userId } }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
+};
+
 // Controller function for registering a new user
 const register = async (req, res) => {
   try {
-    // Normalize the username to lowercase to avoid case sensitivity issues
     const normalizedUserName = req.body.userName.trim().toLowerCase();
-
-    // Check if the user with the same userName already exists
     const existingUser = await User.findOne({ userName: normalizedUserName });
 
     if (existingUser) {
-      // If userName already exists, respond with a 400 Bad Request and a message
       return res.status(400).json({ message: 'Username already exists' });
     }
 
-    // Create a new user instance using the User model
     const user = new User({
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       userName: normalizedUserName,
-      password: req.body.password, // Will be hashed in the pre-save hook
+      password: req.body.password,
     });
 
-    // Save the new user to the database
     await user.save();
 
-    // After saving, generate a JWT token to log the user in immediately
-    const payload = {
-      user: {
-        id: user._id,  // Include the user's id in the token payload
-      },
-    };
+    // Generate tokens after registration
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
 
-    // Generate the JWT token with a 1-hour expiration time
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
+    // Save the refresh token to the user's database record
+    user.refreshToken = refreshToken;
+    await user.save();
 
-    // Respond with the token and a success message
-    res.status(201).json({ message: 'User registered successfully', token });
+    // Set the refresh token as an HTTP-only cookie
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.status(201).json({ message: 'User registered successfully', accessToken });
   } catch (error) {
-    // Handle MongoDB duplicate key error (e.g., for unique fields like userName)
     if (error.code === 11000) {
       return res.status(400).json({ message: 'Username already exists' });
     }
-
-    // If it's any other error, log the error and respond with status code 500 (Server Error)
     console.error('Error during registration:', error);
     res.status(500).json({ message: 'Server error during registration' });
   }
@@ -55,41 +60,90 @@ const register = async (req, res) => {
 // Controller function for logging in a user
 const login = async (req, res) => {
   try {
-    // Find the user by their userName (case-insensitive search)
     const user = await User.findOne({ userName: new RegExp('^' + req.body.userName + '$', 'i') });
-    
-    // If no user is found, return a 404 (Not Found) response
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Compare the plain-text password from the request with the hashed password from the database
     const isMatch = await bcrypt.compare(req.body.password.trim(), user.password.trim());
 
-    // If passwords don't match, return a 401 (Unauthorized) response
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // If the password is valid, generate a JWT token
-    const payload = { 
-      user: { 
-        id: user._id  // Ensure the token payload contains user.id inside "user"
-      }
-    };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });  // Token expires in 1 hour
+    // Generate tokens after successful login
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
 
-    // Respond with the generated token and status code 200 (OK)
-    res.status(200).json({ token });
+    // Save the refresh token to the user's database record
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    // Set the refresh token as an HTTP-only cookie
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.status(200).json({ accessToken });
   } catch (error) {
-    // If there's any error during login, log the error and respond with status code 500
     console.error('Login error:', error);
     res.status(500).json({ message: 'Server error during login' });
   }
 };
 
-// Export the register and login functions so they can be used in route handlers
+// Refresh token route
+const refresh = async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return res.status(403).json({ message: 'Refresh token missing' });
+  }
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+    const user = await User.findById(decoded.user.id);
+
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(403).json({ message: 'Invalid refresh token' });
+    }
+
+    // Generate a new access token
+    const accessToken = generateAccessToken(user._id);
+
+    res.status(200).json({ accessToken });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(403).json({ message: 'Invalid or expired refresh token' });
+  }
+};
+
+// Logout function to clear the refresh token
+const logout = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (user) {
+      user.refreshToken = null; // Clear the refresh token from the database
+      await user.save();
+    }
+
+    res.clearCookie('refreshToken'); // Clear the refresh token cookie
+    res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ message: 'Server error during logout' });
+  }
+};
+
+// Export the functions so they can be used in routes
 module.exports = {
   register,
   login,
+  refresh,
+  logout,
 };

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate, useOutletContext } from 'react-router-dom'; // Import useNavigate for redirecting
 import "../styling/Register.css"
 
-const Register = () => { // Expect setIsLoggedIn from props
+const Register = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [userName, setUserName] = useState('');
@@ -13,8 +13,8 @@ const Register = () => { // Expect setIsLoggedIn from props
   const { setIsLoggedIn } = useOutletContext();
 
   // Dynamically determine the backend URL based on environment
-  const apiUrl = import.meta.env.MODE === 'production' 
-    ? import.meta.env.VITE_PROD_BACKEND_URL 
+  const apiUrl = import.meta.env.MODE === 'production'
+    ? import.meta.env.VITE_PROD_BACKEND_URL
     : import.meta.env.VITE_BACKEND_URL;
 
   // Function to handle errors
@@ -35,7 +35,7 @@ const Register = () => { // Expect setIsLoggedIn from props
     console.error('Error registering user:', error);
   };
 
-  // Function to handle user registration and auto login
+  // Function to handle user registration and auto-login
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -52,15 +52,22 @@ const Register = () => { // Expect setIsLoggedIn from props
         setMessage('User registered successfully! Logging in...');
 
         // Automatically log the user in after successful registration
-        const loginResponse = await axios.post(`${apiUrl}/api/auth/login`, {
-          userName: userName.trim(),
-          password: password.trim(),
-        });
+        const loginResponse = await axios.post(
+          `${apiUrl}/api/auth/login`,
+          {
+            userName: userName.trim(),
+            password: password.trim(),
+          },
+          { withCredentials: true } // Include cookies for refresh tokens
+        );
 
-        // Store the token and update login state
-        localStorage.setItem('token', loginResponse.data.token);
-        setIsLoggedIn(true); // Update the login state to true
-        navigate('/location'); // Redirect to location page after successful login
+        // Store the access token in localStorage
+        const { accessToken } = loginResponse.data;
+        localStorage.setItem('accessToken', accessToken);
+
+        // Update login state to true and redirect
+        setIsLoggedIn(true);
+        navigate('/location'); // Redirect to the location page after successful login
       }
     } catch (error) {
       handleError(error);

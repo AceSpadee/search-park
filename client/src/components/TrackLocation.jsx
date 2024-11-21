@@ -1,20 +1,11 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../utils/axios';
 import '../styling/TrackLocation.css';
 
 const TrackLocation = ({ addLocation }) => {
   const [location, setLocation] = useState(null);  // State to track saved location
   const [note, setNote] = useState('');  // State to track the user's note input
   const [error, setError] = useState(null);  // State to track errors
-
-  // Dynamically determine the backend URL based on environment
-  const isProduction = import.meta.env.MODE === 'production';
-  const apiUrl = isProduction 
-    ? import.meta.env.VITE_PROD_BACKEND_URL 
-    : import.meta.env.VITE_BACKEND_URL;
-
-  // Utility function to get the JWT token
-  const getToken = () => localStorage.getItem('token');
 
   // Function to handle errors
   const handleError = (error) => {
@@ -39,15 +30,9 @@ const TrackLocation = ({ addLocation }) => {
   // Function to send the location data to the backend
   const saveLocation = async (locationData) => {
     try {
-      const token = getToken();
-      const url = `${apiUrl}/api/location`; // Use the `/api/location` endpoint for saving a static location
-
-      const response = await axios.post(url, locationData, {
-        headers: { 'x-auth-token': token },
-      });
-
-      addLocation(response.data);  // Add to map
-      setLocation(locationData);   // Update local state with saved location
+      const response = await api.post('/api/location', locationData); // Axios instance handles tokens
+      addLocation(response.data); // Add to map
+      setLocation(locationData); // Update local state with saved location
     } catch (error) {
       handleError(error);
     }
@@ -79,16 +64,16 @@ const TrackLocation = ({ addLocation }) => {
 
   return (
     <div className="track-location-container">
-      <textarea 
-        placeholder="Enter a note (optional)" 
-        value={note} 
-        onChange={(e) => setNote(e.target.value)} 
+      <textarea
+        placeholder="Enter a note (optional)"
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
       />
       <button onClick={trackLocation}>Track My Location</button>
-      
+
       {/* Display error message if it exists */}
       {error && <p className="error">{error}</p>}
-      
+
       {/* Display saved location coordinates */}
       {location && (
         <p>

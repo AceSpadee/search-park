@@ -8,12 +8,14 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
-  const { setIsLoggedIn } = useOutletContext(); // Retrieve setIsLoggedIn from Outlet context
+  const { setIsLoggedIn } = useOutletContext();
 
-  const apiUrl = import.meta.env.MODE === 'production' 
-    ? import.meta.env.VITE_PROD_BACKEND_URL 
+  // Dynamically determine backend URL
+  const apiUrl = import.meta.env.MODE === 'production'
+    ? import.meta.env.VITE_PROD_BACKEND_URL
     : import.meta.env.VITE_BACKEND_URL;
 
+  // Handle errors and display appropriate messages
   const handleError = (error) => {
     if (error.response) {
       if (error.response.status === 401) {
@@ -31,19 +33,28 @@ const Login = () => {
     console.error('Login error:', error);
   };
 
+  // Handle user login
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(`${apiUrl}/api/auth/login`, {
-        userName: userName.trim(),
-        password: password.trim(),
-      });
+      // Send login request with credentials
+      const response = await axios.post(
+        `${apiUrl}/api/auth/login`,
+        {
+          userName: userName.trim(),
+          password: password.trim(),
+        },
+        { withCredentials: true } // Include cookies for refresh tokens
+      );
 
-      localStorage.setItem('token', response.data.token);
+      // Store the access token in localStorage
+      const { accessToken } = response.data;
+      localStorage.setItem('accessToken', accessToken);
+
       setMessage('Login successful!');
-      setIsLoggedIn(true); // Update login state to true
-      navigate('/location');
+      setIsLoggedIn(true); // Update login state
+      navigate('/location'); // Redirect to the location page
     } catch (error) {
       handleError(error);
     }
