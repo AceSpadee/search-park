@@ -5,23 +5,19 @@ import Logout from './Logout';
 
 const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    setIsLoggedIn(false); // Update login status to false
+    // Clear session data
+    localStorage.removeItem('accessToken');
+    setIsLoggedIn(false); // Update state
   };
 
   return (
     <nav className="navbar">
-      {/* Home Button */}
       <div className="nav-section">
         <Link to="/" className="nav-button home-btn">Home</Link>
       </div>
-
-      {/* Locations Button */}
       <div className="nav-section logo">
         <Link to="/location" className="nav-button">Locations</Link>
       </div>
-
-      {/* Map, Login/Register or Logout */}
       <div className="nav-section nav-links">
         {!isLoggedIn ? (
           <>
