@@ -82,7 +82,11 @@ const TrackMovement = ({ updateMap }) => {
           setPath((prevPath) => {
             const newPath = [...prevPath, [latitude, longitude]];
             console.log('Path in TrackMovement before updateMap:', newPath); // Debugging log
-            updateMap({ currentPosition: [latitude, longitude], path: newPath });
+            try {
+              updateMap({ currentPosition: [latitude, longitude], path: newPath });
+            } catch (err) {
+              console.error('Error updating map:', err);
+            }
             console.log("Path in TrackMovement:", newPath); // Debugging log
             return newPath;
           });

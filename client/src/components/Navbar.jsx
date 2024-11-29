@@ -17,6 +17,9 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
       </div>
       <div className="nav-section logo">
         <Link to="/location" className="nav-button">Locations</Link>
+        {isLoggedIn && (
+          <Link to="/groupmap" className="nav-button">Group Map</Link>
+        )}
       </div>
       <div className="nav-section nav-links">
         {!isLoggedIn ? (

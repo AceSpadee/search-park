@@ -1,4 +1,3 @@
-// routes/api/session.js
 const express = require('express');
 const {
   startNewSession,
@@ -6,6 +5,7 @@ const {
   stopSession,
   getMovements,
   getSessions,
+  getAllSessions,
 } = require('../../controllers/sessionController'); // Import from sessionController
 const auth = require('../../utils/auth');
 const router = express.Router();
@@ -18,6 +18,9 @@ router.post('/:sessionId/movement', auth, saveMovement);
 
 // Stop a session
 router.put('/:sessionId/stop', auth, stopSession);
+
+// Route for all sessions
+router.get('/all', getAllSessions); // Place `/all` before `/:sessionId?`
 
 // Get all sessions with grouped movements
 router.get('/', auth, getSessions);

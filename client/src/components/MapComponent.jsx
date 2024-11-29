@@ -24,9 +24,17 @@ const CurrentPositionIcon = L.icon({
   shadowSize: [45, 45],
 });
 
-const MapComponent = ({ currentPosition, sessionPaths = [], savedLocations = [], onDeleteLocation, onDragMarker }) => {
+const MapComponent = ({
+  currentPosition,
+  sessionPaths = [], // Session paths for individual user
+  savedLocations = [], // Saved locations for individual user
+  allSessionPaths = [], // New prop for group map paths with colors
+  onDeleteLocation,
+  onDragMarker,
+}) => {
 
   console.log('Session paths passed to MapComponent:', sessionPaths);
+  console.log('Group session paths passed to MapComponent:', allSessionPaths);
   
   return (
     <div className="map-container">
@@ -35,7 +43,12 @@ const MapComponent = ({ currentPosition, sessionPaths = [], savedLocations = [],
           <h5>Locations</h5>
         </div>
         <div className="card-body">
-          <MapContainer center={[45.628, -122.6739]} zoom={12} style={{ height: '650px', width: '100%' }} preferCanvas={true}>
+          <MapContainer
+            center={[45.628, -122.6739]}
+            zoom={12}
+            style={{ height: '650px', width: '100%' }}
+            preferCanvas={true}
+          >
             <TileLayer
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
               attribution="Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA"
@@ -81,11 +94,27 @@ const MapComponent = ({ currentPosition, sessionPaths = [], savedLocations = [],
 
             {/* Render polylines for session paths */}
             {Array.isArray(sessionPaths) && sessionPaths.map((sessionPath, index) => (
-              <Polyline
-                key={`session-${index}`}
-                positions={sessionPath}
-                color="blue"
-              />
+              sessionPath?.path?.length > 0 && ( // Ensure `sessionPath.path` exists and has elements
+                <Polyline
+                  key={`session-${index}`}
+                  positions={sessionPath.path} // Safely access path
+                  color={sessionPath.color}
+                />
+              )
+            ))}
+
+            {/* Render polylines for group session paths */}
+            {Array.isArray(allSessionPaths) &&
+            allSessionPaths.map((session, index) => (
+              session?.path?.length > 0 && (
+                <Polyline
+                  key={`group-session-${index}`}
+                  positions={session.path} // Correctly use the path from movements
+                  color={session.color} // User’s unique color
+                  weight={4} // Adjust line thickness if needed
+                  opacity={0.8} // Optional: Adjust opacity
+                />
+              )
             ))}
           </MapContainer>
         </div>

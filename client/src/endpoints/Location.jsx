@@ -30,20 +30,21 @@ const LocationApp = () => {
   const fetchSessions = async () => {
     try {
       setLoadingSessions(true);
-
+  
       // Fetch sessions with grouped movements
       const response = await api.get('/api/session');
-
+  
       const sessionsData = Array.isArray(response.data) ? response.data : [];
       console.log('Fetched session data:', sessionsData);
-
-      // Map movements into session paths
-      const paths = sessionsData.map((session) =>
-        session.movements.map((movement) => [movement.lat, movement.lng])
-      );
-
+  
+      // Map movements into session paths with colors
+      const paths = sessionsData.map((session) => ({
+        path: session.movements.map((movement) => [movement.lat, movement.lng]),
+        color: session.pathColor, // Fetch pathColor from session data
+      }));
+  
+      console.log('Mapped session paths:', paths);
       setSessionPaths(paths);
-      console.log('Session paths updated:', paths);
     } catch (error) {
       handleError(error);
     } finally {
@@ -118,14 +119,23 @@ const LocationApp = () => {
       {loading && <div className="loading-spinner">Loading...</div>} {/* Display loading spinner */}
 
       <div className="controls">
-        <TrackLocation addLocation={addLocation} />
+      <TrackLocation addLocation={addLocation} />
         <TrackMovement
           updateMap={({ currentPosition: pos, path }) => {
             console.log('Path received in LocationApp:', path); // Debugging log
             setCurrentPosition(pos);
             setSessionPaths((prevPaths) => {
               const updatedPaths = [...prevPaths];
-              updatedPaths[updatedPaths.length - 1] = path; // Update the last session path
+              const lastPath = updatedPaths[updatedPaths.length - 1];
+
+              // Ensure path color persists for the current session
+              if (lastPath) {
+                updatedPaths[updatedPaths.length - 1] = {
+                  ...lastPath,
+                  path,
+                };
+              }
+
               console.log('Updated sessionPaths in LocationApp:', updatedPaths); // Debugging log
               return updatedPaths;
             });

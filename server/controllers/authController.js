@@ -12,7 +12,20 @@ const generateRefreshToken = (userId) => {
   return jwt.sign({ user: { id: userId } }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
 };
 
-// Controller function for registering a new user
+// Function to generate a unique color for the user
+const generateUniqueColor = async () => {
+  let uniqueColor;
+  let isUnique = false;
+
+  while (!isUnique) {
+    uniqueColor = `#${Math.floor(Math.random() * 16777215).toString(16)}`; // Generate a random color
+    const existingUser = await User.findOne({ pathColor: uniqueColor }); // Check if color already exists
+    isUnique = !existingUser; // Repeat until a unique color is found
+  }
+
+  return uniqueColor;
+};
+
 const register = async (req, res) => {
   try {
     const normalizedUserName = req.body.userName.trim().toLowerCase();
@@ -22,11 +35,15 @@ const register = async (req, res) => {
       return res.status(400).json({ message: 'Username already exists' });
     }
 
+    // Generate a unique color for the user
+    const pathColor = await generateUniqueColor();
+
     const user = new User({
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       userName: normalizedUserName,
       password: req.body.password,
+      pathColor, // Assign the unique color to the user
     });
 
     await user.save();
@@ -47,7 +64,7 @@ const register = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    res.status(201).json({ message: 'User registered successfully', accessToken });
+    res.status(201).json({ message: 'User registered successfully', accessToken, pathColor });
   } catch (error) {
     if (error.code === 11000) {
       return res.status(400).json({ message: 'Username already exists' });

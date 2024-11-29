@@ -12,18 +12,20 @@ const startNewSession = async (req, res) => {
     }
 
     const sessionId = uuidv4();
+
     const newSession = new Session({
       user: user._id,
       sessionId,
       startTime: new Date(),
       movements: [],
+      pathColor: user.pathColor, // Use the user's pathColor
     });
 
     await newSession.save();
     user.sessions.push(newSession._id);
     await user.save();
 
-    res.status(201).json({ message: 'New session started', sessionId });
+    res.status(201).json({ message: 'New session started', sessionId, pathColor: user.pathColor });
   } catch (error) {
     console.error('Error starting session:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -141,6 +143,7 @@ const getSessions = async (req, res) => {
         formattedTimestamp: movement.formattedTimestamp,
         notes: movement.notes,
       })),
+      pathColor: session.pathColor, // Ensure the session's color is included
     }));
 
     console.log('Fetching sessions for user:', userId);
@@ -155,10 +158,27 @@ const getSessions = async (req, res) => {
   }
 };
 
+const getAllSessions = async (req, res) => {
+  try {
+    // This query fetches all sessions without filtering by user
+    const sessions = await Session.find({}).populate('user', 'firstName lastName pathColor');
+    
+    if (!sessions || sessions.length === 0) {
+      return res.status(200).json([]); // Return empty array if no sessions exist
+    }
+
+    res.status(200).json(sessions);
+  } catch (error) {
+    console.error('Error fetching all sessions:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   startNewSession,
   saveMovement,
   stopSession,
   getMovements,
   getSessions,
+  getAllSessions,
 };

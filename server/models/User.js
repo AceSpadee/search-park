@@ -32,6 +32,10 @@ const userSchema = new mongoose.Schema({
       ref: 'Session', // Reference to the Session model
     }
   ],
+  pathColor: {
+    type: String,
+    unique: true, // Ensure each user has a unique color
+  },
   // Add refreshToken field
   refreshToken: {
     type: String,
