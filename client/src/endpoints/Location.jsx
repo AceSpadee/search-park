@@ -3,6 +3,7 @@ import api from '../utils/axios'
 import TrackLocation from '../components/TrackLocation';
 import TrackMovement from '../components/TrackMovement';
 import MapComponent from '../components/MapComponent';
+import PathColorUpdater from '../components/PathColorUpdater';
 import "../styling/Location.css";
 
 const LocationApp = () => {
@@ -10,6 +11,7 @@ const LocationApp = () => {
   const [currentPosition, setCurrentPosition] = useState(null);
   const [sessionPaths, setSessionPaths] = useState([]); // Initialize as an empty array
   const [loadingSessions, setLoadingSessions] = useState(false);
+  const [pathColor, setPathColor] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -30,19 +32,19 @@ const LocationApp = () => {
   const fetchSessions = async () => {
     try {
       setLoadingSessions(true);
-  
+
       // Fetch sessions with grouped movements
       const response = await api.get('/api/session');
-  
+
       const sessionsData = Array.isArray(response.data) ? response.data : [];
       console.log('Fetched session data:', sessionsData);
-  
+
       // Map movements into session paths with colors
       const paths = sessionsData.map((session) => ({
         path: session.movements.map((movement) => [movement.lat, movement.lng]),
         color: session.pathColor, // Fetch pathColor from session data
       }));
-  
+
       console.log('Mapped session paths:', paths);
       setSessionPaths(paths);
     } catch (error) {
@@ -52,7 +54,18 @@ const LocationApp = () => {
     }
   };
 
-  console.log('Updated sessionPaths in LocationApp:', sessionPaths);
+  const fetchPathColor = async () => {
+    try {
+      const response = await api.get('/api/users/profile'); // Adjusted endpoint
+      setPathColor(response.data.pathColor);
+    } catch (error) {
+      console.error('Error fetching path color:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPathColor();
+  }, []);
 
   const fetchLocationsAndSessions = async () => {
     setLoading(true);
@@ -60,12 +73,15 @@ const LocationApp = () => {
     setLoading(false);
   };
 
+  useEffect(() => {
+    fetchLocationsAndSessions();
+  }, []);
+
   const addLocation = (newLocation) => {
     if (!newLocation || !newLocation._id) {
       handleError(new Error('Invalid location data.'));
       return;
     }
-
     setLocations((prev) => [...prev, newLocation]);
   };
 
@@ -110,13 +126,25 @@ const LocationApp = () => {
     }
   };
 
-  useEffect(() => {
-    fetchLocationsAndSessions();
-  }, []);
-
   return (
     <div className="location-app">
       {loading && <div className="loading-spinner">Loading...</div>} {/* Display loading spinner */}
+
+      {pathColor && (
+        <PathColorUpdater
+          currentColor={pathColor}
+          onColorUpdate={(newColor) => {
+            setPathColor(newColor); // Update the local state
+            // Optionally refresh the session paths with the new color
+            setSessionPaths((prevPaths) =>
+              prevPaths.map((session) => ({
+                ...session,
+                color: newColor, // Update all sessions with the new color
+              }))
+            );
+          }}
+        />
+      )}
 
       <div className="controls">
       <TrackLocation addLocation={addLocation} />
@@ -133,6 +161,7 @@ const LocationApp = () => {
                 updatedPaths[updatedPaths.length - 1] = {
                   ...lastPath,
                   path,
+                  color: pathColor, // Ensure path color persists for the current session
                 };
               }
 

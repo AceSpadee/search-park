@@ -174,6 +174,33 @@ const getAllSessions = async (req, res) => {
   }
 };
 
+// Update the path color for a user
+const updatePathColor = async (req, res) => {
+  try {
+    // Use req.user.id instead of req.user.userId
+    const userId = req.user.id; 
+    const { newColor } = req.body;
+
+    if (!newColor) {
+      return res.status(400).json({ message: 'New color is required' });
+    }
+
+    // Find the user and update their pathColor
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.pathColor = newColor;
+    await user.save();
+
+    res.status(200).json({ message: 'Path color updated successfully', newColor });
+  } catch (error) {
+    console.error('Error updating path color:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   startNewSession,
   saveMovement,
@@ -181,4 +208,5 @@ module.exports = {
   getMovements,
   getSessions,
   getAllSessions,
+  updatePathColor,
 };

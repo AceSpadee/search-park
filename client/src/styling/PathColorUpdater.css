@@ -1,0 +1,66 @@
+:root {
+    --first-color: #363b4e;
+    --second-color: #4f3b78;
+    --third-color: #927fbf;
+    --fourth-color: #c4bbf0;
+    --text-color: #f0f0f0;
+    --hover-color: #c82333;
+    --disabled-color: #ccc;
+  }
+
+.path-color-updater {
+    margin: 20px auto;
+    padding: 15px;
+    max-width: 400px;
+    background-color: var(--second-color);
+    border: 1px solid var(--third-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    color: var(--text-color);
+  }
+  
+  .path-color-updater h3 {
+    margin-bottom: 15px;
+    text-align: center;
+  }
+  
+  .path-color-updater .error {
+    color: var(--error-color);
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  
+  .path-color-updater .success {
+    color: var(--fourth-color);
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  
+  .path-color-updater form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .path-color-updater input[type="color"] {
+    width: 50px;
+    height: 50px;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .path-color-updater button {
+    padding: 10px;
+    font-size: 16px;
+    background-color: var(--fourth-color);
+    border: 1px solid var(--third-color);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--dark-text-color);
+  }
+  
+  .path-color-updater button:hover {
+    background-color: var(--third-color);
+    color: var(--text-color);
+  }
