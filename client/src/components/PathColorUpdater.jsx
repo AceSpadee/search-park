@@ -59,7 +59,20 @@ const PathColorUpdater = ({ currentColor, onColorUpdate }) => {
       <button
         onClick={updateColor}
         disabled={loading}
-        style={{ backgroundColor: newColor }}
+        style={{
+          backgroundColor: loading ? '#ccc' : 'var(--background-color)',
+          cursor: loading ? 'not-allowed' : 'pointer',
+          border: '2px solid var(--border-color)',
+          color: 'var(--title-color)',
+          padding: '10px',
+          fontSize: '16px',
+          borderRadius: '4px',
+          transition: 'background 0.3s ease, color 0.3s ease',
+        }}
+        onMouseOver={(e) =>
+          !loading && (e.target.style.background = `linear-gradient(to bottom right, #2a042a, ${newColor})`)
+        }
+        onMouseOut={(e) => !loading && (e.target.style.background = 'var(--background-color)')}
       >
         {loading ? 'Updating...' : 'Update Color'}
       </button>

@@ -1,118 +1,87 @@
-  /* MapComponent.css */
+:root {
+  --container-color: #0d0c15;
+  --text-color: #1e3a58;
+  --title-color: #579cff;
+  --background-color: #4b143b;
+  --background-gradient: linear-gradient(to bottom right, #301126, #060409);
+}
 
-  :root {
-    --first-color: #363b4e;
-    --second-color: #4f3b78;
-    --third-color: #927fbf;
-    --fourth-color: #c4bbf0;
-    --text-color: #f0f0f0;
-  }
+.map-container {
+  background: var(--background-gradient);
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+  z-index: 0;
+}
 
-  /* Full-screen map container */
-  .map-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100vw;  /* Full viewport width */
-    height: 100vh;  /* Full viewport height */
-    margin: 0;
-    padding: 0;
-    z-index: 0;
-  }
+.map-container .card {
+  background-color: var(--container-color);
+}
 
-  .map-container .card .card-header {
-    background-color: var(--third-color);  /* Use third color */
-    color: var(--text-color);
-  }
-
-  /* Alert styling for error messages */
-  .alert-danger {
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 4px;
-    text-align: center;
-  }
-
-/* Card styling */
 .card {
-  background-color: var(--second-color);  /* Match navbar color */
-  color: var(--text-color);
   width: 100%;
   height: 100%;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
   margin: 0;
   padding: 0;
 }
 
-/* Update card header to match the color scheme */
+.map-container .card .card-header{
+  background-color: var(--background-color);
+  color: var(--title-color);
+}
+
 .card-header {
-  background-color: var(--third-color);  /* Use third color */
-  color: var(--text-color);
   padding: 15px;
-  border-radius: 0;  /* Remove rounded corners */
   text-align: center;
   font-size: 1.2em;
 }
 
-/* Card body styling */
 .card-body {
-  background-color: var(--second-color);  /* Match card body to navbar */
   padding: 0;
   height: 100%;
-  margin: 0;
-  border: none;
-  box-shadow: none;
 }
 
-  /* Button styling */
-  .btn-danger {
-    background-color: #dc3545;
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
-  }
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+}
 
-  .btn-danger:hover {
-    background-color: #c82333;
-  }
+.btn-danger {
+  background-color: var(--btn-danger-color);
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
 
-  .btn-sm {
-    font-size: 0.875em;
-  }
+.btn-danger:hover {
+  background-color: var(--btn-danger-hover);
+}
 
-  .mt-2 {
-    margin-top: 10px;
-  }
+.btn-sm {
+  font-size: 0.875em;
+}
 
-  /* Leaflet map styling */
-  .leaflet-container {
-    width: 100%;
-    height: 100%;
-    border-radius: 0;  /* Remove border-radius for full-screen view */
-  }
+.mt-2 {
+  margin-top: 10px;
+}
 
-  @media (max-width: 768px) {
-    .map-container {
-      height: 100vh;  /* Full height on mobile */
-    }
+.alert-danger {
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+  text-align: center;
+}
 
-    .card-body {
-      height: 100%;  /* Make sure the map takes full space inside the container */
-    }
+@media (max-width: 768px) {
+  .map-container {
+    height: 100vh;
   }
-  
-  .leaflet-container {
-    width: 100%;
-    height: 100%;
-    border-radius: 0;  /* Remove border-radius for full-screen view */
-  }
+}

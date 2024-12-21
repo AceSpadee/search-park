@@ -1,63 +1,71 @@
-/* TrackLocation.css */
-
 :root {
-  --first-color: #363b4e;
-  --second-color: #4f3b78;
-  --third-color: #927fbf;
-  --fourth-color: #c4bbf0;
-  --text-color: #f0f0f0;
+  --container-color: #0d0c15;
+  --title-color: #579cff;
+  --text-color: #1e3a58;
+  --border-color: #751a65;
+  --background-color: #4b143b;
+  --textarea-bg: #334869;
+  --textarea-text: #f700ff;
+  --hover-gradient: linear-gradient(to bottom right, #2a042a, #324769);
 }
 
-/* Update background to match the dark color scheme */
 .track-location-container {
-  max-width: 600px;
-  min-height: 150px;
-  margin: 20px auto;
-  padding: 20px;
-  border: 1px solid var(--third-color);  /* Subtle border with third color */
+  max-width: 500px;
+  width: 90%;
+  margin: 0 auto;
+  background-color: var(--container-color);
+  border: 2px solid var(--border-color);
+  color: var(--text-color);
+  padding: 15px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);  /* Slightly darker shadow */
-  background-color: var(--second-color);  /* Match navbar color */
-  color: var(--text-color);  /* Use light text color */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .track-location-container textarea {
   width: 100%;
-  min-height: 150px;
-  padding: 15px;
+  min-height: 80px;
+  padding: 10px;
   margin-bottom: 10px;
-  border: 1px solid var(--third-color);  /* Match border to color scheme */
+  border: 1px solid var(--title-color);
   border-radius: 4px;
-  background-color: var(--fourth-color);  /* Darkest background */
-  color: var(--text-color);
+  background-color: var(--textarea-bg);
+  color: var(--textarea-text);
   resize: vertical;
 }
 
 .track-location-container button {
-  display: block;
   width: 100%;
-  padding: 12px;
-  background-color: var(--fourth-color);  /* Lightest color for buttons */
-  color: var(--first-color);  /* Dark text color */
-  border: none;
-  border-radius: 4px;
+  padding: 10px;
   font-size: 16px;
+  background-color: var(--background-color);
+  color: var(--title-color);
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, border 0.3s, transform 0.2s;
 }
 
 .track-location-container button:hover {
-  background-color: #b0a2e0;  /* Slightly darker hover effect */
+  background: var(--hover-gradient);
+  color: var(--title-color);
+  border-color: var(--title-color);
+  transform: scale(1.05);
+}
+
+.track-location-container textarea::placeholder {
+  color: var(--textarea-text);
+  opacity: 0.7;
 }
 
 .track-location-container p {
   margin: 10px 0;
-  color: var(--text-color);  /* Ensure text color matches */
+  color: var(--text-color);
 }
 
 .track-location-container .error {
   color: red;
   font-weight: bold;
+  margin-top: 10px;
 }
 
 @media (max-width: 768px) {

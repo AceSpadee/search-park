@@ -76,8 +76,8 @@ const Register = () => {
 
   return (
     <div className="register-container">
-      <h2 className="text-center mb-4">Register</h2>
       <form onSubmit={handleRegister} className="register-form w-50 mx-auto">
+        <h2 className="text-center mb-4">Register</h2>
         <div className="form-group mb-3">
           <input
             type="text"

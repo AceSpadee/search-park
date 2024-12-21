@@ -1,61 +1,16 @@
-/* Global color variables */
-:root {
-  --first-color: #363b4e;  /* Darkest background color */
-  --second-color: #4f3b78;  /* Darker background color */
-  --third-color: #927fbf;  /* Medium background color */
-  --fourth-color: #c4bbf0;  /* Lightest color */
-  --text-color: #f0f0f0;  /* Light text color */
-}
+.app {
+  --background-gradient: linear-gradient(to bottom right, #301126, #060409);
+  --title-color: #579cff;
+  --border-color: #8c2466;
 
-/* Apply the darkest color to the entire background */
-html, body {
-  background-color: var(--first-color);
-  color: var(--text-color);
+  background: var(--background-gradient);
+  color: var(--title-color);
+  height: 100vh;
+  font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  height: 100%;
-  font-family: Arial, sans-serif;
 }
 
-/* Main app container */
-#root, .app-container {
-  background-color: var(--first-color);
-  min-height: 100vh;
-  color: var(--text-color);
-  display: flex;
-  flex-direction: column;
-}
-
-/* Navbar styling */
-.navbar {
-  background-color: var(--second-color);  /* Darker background for navbar */
-  color: var(--text-color);
-}
-
-/* Card styling to match navbar */
-.card {
-  background-color: var(--second-color);  /* Match card background to navbar */
-  color: var(--text-color);
-  border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);  /* Optional: subtle shadow */
-}
-
-.card-header {
-  background-color: var(--third-color);  /* Slightly lighter header */
-  color: var(--text-color);
-}
-
-.card-body {
-  background-color: var(--second-color);  /* Match card body to navbar */
-  color: var(--text-color);
-}
-
-/* Additional button styling */
-.btn, .nav-button, .logout-button {
-  background-color: var(--fourth-color);
-  color: var(--first-color);
-}
-
-.btn:hover, .nav-button:hover, .logout-button:hover {
-  background-color: #b0a2e0;  /* Slightly darker on hover */
+.app .container {
+  border: 2px solid var(--border-color);
 }

@@ -70,9 +70,10 @@ const saveMovement = async (req, res) => {
 const stopSession = async (req, res) => {
   try {
     const { sessionId } = req.params;
+
     const session = await Session.findOneAndUpdate(
       { sessionId },
-      { endTime: new Date() },
+      { endTime: new Date() }, // Set end time
       { new: true }
     );
 
@@ -80,7 +81,15 @@ const stopSession = async (req, res) => {
       return res.status(404).json({ message: 'Session not found' });
     }
 
-    res.status(200).json({ message: 'Session stopped', session });
+    // Calculate tracking duration in minutes
+    const durationMs = new Date(session.endTime) - new Date(session.startTime);
+    const durationMinutes = Math.floor(durationMs / 1000 / 60);
+
+    res.status(200).json({
+      message: 'Session stopped',
+      session,
+      duration: `${durationMinutes} minutes`,
+    });
   } catch (error) {
     console.error('Error stopping session:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

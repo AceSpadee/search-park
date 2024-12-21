@@ -1,63 +1,29 @@
 :root {
-  --first-color: #363b4e;
-  --second-color: #4f3b78;
-  --third-color: #927fbf;
-  --fourth-color: #c4bbf0;
-  --text-color: #f0f0f0;
-  --hover-color: #0056b3;
-  --border-color: #f0f0f0;
+  --container-color: #0d0c15;
+  --border-color: #4b143b;
+  --title-color: #579cff;
+  --text-color: #1e3a58;
 }
 
-/* Main container styling */
 .container {
   max-width: 600px;
   margin: 40px auto;
   padding: 20px;
   text-align: center;
-  border: 2px solid var(--first-color); /* Apply new color */
+  border: 2px solid var(--border-color);
   border-radius: 8px;
-  background-color: var(--second-color); /* Apply new color */
-  color: var(--text-color);  /* Adjust text color */
+  background: var(--container-color);
+  color: var(--text-color);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .title {
   font-size: 2.5em;
   margin-bottom: 20px;
-  color: var(--fourth-color); /* Adjust title color */
+  color: var(--title-color);
 }
 
 .description {
   font-size: 1.2em;
   margin-bottom: 30px;
-  color: var(--third-color); /* Adjust description color */
-}
-
-/* Button container */
-.button-container {
-  margin-top: 20px;
-}
-
-/* Primary button styling */
-.button {
-  display: inline-block;
-  padding: 12px 24px;
-  background-color: var(--fourth-color); /* Apply new color */
-  color: var(--first-color); /* Adjust text color for contrast */
-  font-size: 1.1em;
-  border: 2px solid var(--first-color); /* Add border for better definition */
-  border-radius: 4px;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s, color 0.3s, border-color 0.3s;
-}
-
-.button:hover {
-  background-color: var(--third-color); /* Lighter color on hover */
-  color: var(--text-color);
-  border-color: var(--fourth-color); /* Change border color on hover */
-}
-
-.button:active {
-  transform: scale(0.95);
 }

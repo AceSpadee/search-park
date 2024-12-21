@@ -10,6 +10,8 @@ const TrackMovement = ({ updateMap }) => {
   const [sessionId, setSessionId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [tracking, setTracking] = useState(false);
+  const [startTime, setStartTime] = useState(null);
+  const [duration, setDuration] = useState(null);
 
   const intervalRef = useRef(null); // To track the interval ID
 
@@ -28,10 +30,11 @@ const TrackMovement = ({ updateMap }) => {
 
       setLoading(true);
 
-      const response = await api.post(`/api/session/start`); // No need to attach the token manually
+      const response = await api.post(`/api/session/start`);
 
       const newSessionId = response.data.sessionId;
       setSessionId(newSessionId);
+      setStartTime(new Date(response.data.startTime)); // Capture session start time
       setTracking(true);
       setLoading(false);
       console.log('New session created:', newSessionId);
@@ -45,9 +48,7 @@ const TrackMovement = ({ updateMap }) => {
   const saveMovement = async (locationData, activeSessionId) => {
     try {
       console.log('Saving movement:', locationData);
-
       await api.post(`/api/session/${activeSessionId}/movement`, locationData);
-
       console.log('Movement saved successfully:', locationData);
     } catch (error) {
       console.error('Error saving movement:', error.message);
@@ -66,6 +67,9 @@ const TrackMovement = ({ updateMap }) => {
       return;
     }
   
+    // Set the start time when tracking begins
+    setStartTime(new Date());
+  
     if (navigator.geolocation) {
       const id = navigator.geolocation.watchPosition(
         (position) => {
@@ -81,13 +85,7 @@ const TrackMovement = ({ updateMap }) => {
           setCurrentPosition([latitude, longitude]);
           setPath((prevPath) => {
             const newPath = [...prevPath, [latitude, longitude]];
-            console.log('Path in TrackMovement before updateMap:', newPath); // Debugging log
-            try {
-              updateMap({ currentPosition: [latitude, longitude], path: newPath });
-            } catch (err) {
-              console.error('Error updating map:', err);
-            }
-            console.log("Path in TrackMovement:", newPath); // Debugging log
+            updateMap({ currentPosition: [latitude, longitude], path: newPath });
             return newPath;
           });
   
@@ -108,20 +106,37 @@ const TrackMovement = ({ updateMap }) => {
     }
   };
 
-  const stopTracking = () => {
+  const stopTracking = async () => {
     if (watchId) {
       navigator.geolocation.clearWatch(watchId);
       setWatchId(null);
     }
-
+  
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-
+  
+    if (startTime && sessionId) {
+      const endTime = new Date();
+  
+      try {
+        // Send endTime to the backend
+        await api.put(`/api/session/${sessionId}/stop`, { endTime });
+  
+        // Calculate duration
+        const durationMs = endTime - new Date(startTime);
+        const durationMinutes = Math.floor(durationMs / 1000 / 60);
+        setDuration(durationMinutes);
+        console.log(`Duration: ${durationMinutes} minute(s)`);
+      } catch (error) {
+        console.error('Error stopping session:', error.message);
+        setError('Failed to stop tracking session.');
+      }
+    }
+  
     setSessionId(null);
     setTracking(false);
-    setError('Tracking stopped.');
   };
 
   useEffect(() => {
@@ -154,6 +169,11 @@ const TrackMovement = ({ updateMap }) => {
       {currentPosition && (
         <p className="current-position">
           <strong>Current location:</strong> Lat: {currentPosition[0]}, Lng: {currentPosition[1]}
+        </p>
+      )}
+      {duration !== null && (
+        <p className="tracking-duration">
+          <strong>Duration:</strong> {duration} minute(s)
         </p>
       )}
     </div>

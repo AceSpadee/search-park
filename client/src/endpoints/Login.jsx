@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useOutletContext } from 'react-router-dom'; // Use useOutletContext to get setIsLoggedIn
-import "../styling/Login.css"
+import "../styling/Login.css";
 
 const Login = () => {
   const [userName, setUserName] = useState('');
