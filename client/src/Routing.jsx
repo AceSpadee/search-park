@@ -7,6 +7,7 @@ import Login from './endpoints/Login';
 import Register from './endpoints/Register';
 import LocationApp from './endpoints/Location';
 import GroupMap from './endpoints/GroupMap';
+import Mapbox3DMap from './components/Mapbox3DMap';
 
 // Create the router using React Router v6
 const router = createBrowserRouter([
@@ -34,6 +35,10 @@ const router = createBrowserRouter([
       {
         path: 'groupmap',
         element: <GroupMap />,
+      },
+      {
+        path: 'othermap',
+        element: <Mapbox3DMap />,
       },
     ],
   },
