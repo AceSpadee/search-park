@@ -3,26 +3,27 @@ import axios from 'axios';
 // Dynamically determine the backend URL based on environment
 const baseURL =
   import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_PROD_BACKEND_URL // For production, use this backend URL
-    : import.meta.env.VITE_BACKEND_URL;     // For development, use this backend URL
+    ? import.meta.env.VITE_PROD_BACKEND_URL
+    : import.meta.env.VITE_BACKEND_URL;
 
 // Create an Axios instance with the base URL
 const api = axios.create({
   baseURL, // Automatically prepends this URL to all requests
+  withCredentials: true, // Include cookies for authentication
 });
 
 // Add a request interceptor to attach the access token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken'); // Retrieve the token from localStorage
   if (token) {
-    config.headers['x-auth-token'] = token; // Attach the token to the headers
+    config.headers['Authorization'] = `Bearer ${token}`; // Attach token to headers
   }
   return config;
 });
 
 // Add a response interceptor to handle expired access tokens
 api.interceptors.response.use(
-  (response) => response, // If the response is successful, just return it
+  (response) => response, // Pass successful responses through
   async (error) => {
     const originalRequest = error.config;
 
@@ -31,15 +32,9 @@ api.interceptors.response.use(
       originalRequest._retry = true; // Mark the request as retried
 
       try {
-        // Attempt to refresh the token
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) {
-          throw new Error('No refresh token available');
-        }
-
         // Make a request to the refresh token endpoint
         const { data } = await axios.post(`${baseURL}/api/auth/refresh`, null, {
-          headers: { 'refreshToken': refreshToken },
+          withCredentials: true, // Include the HTTP-only cookie
         });
 
         const newAccessToken = data.accessToken;
@@ -48,15 +43,14 @@ api.interceptors.response.use(
         localStorage.setItem('accessToken', newAccessToken);
 
         // Update the Authorization header and retry the original request
-        originalRequest.headers['x-auth-token'] = newAccessToken;
+        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
 
         return api(originalRequest); // Retry the original request
       } catch (refreshError) {
         console.error('Refresh token error:', refreshError);
 
-        // Clear tokens from localStorage if refresh fails and redirect to login
+        // Clear tokens and redirect to login if refresh fails
         localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
         window.location.href = '/login'; // Redirect to login page
       }
     }
@@ -65,4 +59,4 @@ api.interceptors.response.use(
   }
 );
 
-export default api; // Export the Axios instance
+export default api;

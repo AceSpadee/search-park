@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate, useOutletContext } from 'react-router-dom'; // Use useOutletContext to get setIsLoggedIn
+import api from '../utils/axios'; // Import the centralized Axios instance
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import "../styling/Login.css";
 
 const Login = () => {
@@ -9,11 +9,6 @@ const Login = () => {
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
   const { setIsLoggedIn } = useOutletContext();
-
-  // Dynamically determine backend URL
-  const apiUrl = import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_PROD_BACKEND_URL
-    : import.meta.env.VITE_BACKEND_URL;
 
   // Handle errors and display appropriate messages
   const handleError = (error) => {
@@ -39,14 +34,10 @@ const Login = () => {
 
     try {
       // Send login request with credentials
-      const response = await axios.post(
-        `${apiUrl}/api/auth/login`,
-        {
-          userName: userName.trim(),
-          password: password.trim(),
-        },
-        { withCredentials: true } // Include cookies for refresh tokens
-      );
+      const response = await api.post('/api/auth/login', {
+        userName: userName.trim(),
+        password: password.trim(),
+      });
 
       // Store the access token in localStorage
       const { accessToken } = response.data;

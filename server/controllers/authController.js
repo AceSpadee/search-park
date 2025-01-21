@@ -122,15 +122,27 @@ const refresh = async (req, res) => {
 
   try {
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-
     const user = await User.findById(decoded.user.id);
 
     if (!user || user.refreshToken !== refreshToken) {
       return res.status(403).json({ message: 'Invalid refresh token' });
     }
 
-    // Generate a new access token
+    // Generate a new access and refresh token
     const accessToken = generateAccessToken(user._id);
+    const newRefreshToken = generateRefreshToken(user._id);
+
+    // Save the new refresh token in the database
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
+    // Update the refresh token cookie
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
 
     res.status(200).json({ accessToken });
   } catch (error) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../utils/axios';
 import { useNavigate, useOutletContext } from 'react-router-dom'; // Import useNavigate for redirecting
 import "../styling/Register.css"
 
@@ -11,11 +11,6 @@ const Register = () => {
   const [message, setMessage] = useState('');
   const navigate = useNavigate(); // Initialize the useNavigate hook
   const { setIsLoggedIn } = useOutletContext();
-
-  // Dynamically determine the backend URL based on environment
-  const apiUrl = import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_PROD_BACKEND_URL
-    : import.meta.env.VITE_BACKEND_URL;
 
   // Function to handle errors
   const handleError = (error) => {
@@ -41,7 +36,7 @@ const Register = () => {
 
     try {
       // First, register the user
-      const response = await axios.post(`${apiUrl}/api/auth/register`, {
+      const response = await api.post(`/api/auth/register`, {
         firstName,
         lastName,
         userName,
@@ -50,24 +45,20 @@ const Register = () => {
 
       if (response.status === 201) {
         setMessage('User registered successfully! Logging in...');
-
-        // Automatically log the user in after successful registration
-        const loginResponse = await axios.post(
-          `${apiUrl}/api/auth/login`,
-          {
+        try {
+          const loginResponse = await api.post(`/api/auth/login`, {
             userName: userName.trim(),
             password: password.trim(),
-          },
-          { withCredentials: true } // Include cookies for refresh tokens
-        );
+          });
 
-        // Store the access token in localStorage
-        const { accessToken } = loginResponse.data;
-        localStorage.setItem('accessToken', accessToken);
-
-        // Update login state to true and redirect
-        setIsLoggedIn(true);
-        navigate('/location'); // Redirect to the location page after successful login
+          const { accessToken } = loginResponse.data;
+          localStorage.setItem('accessToken', accessToken);
+          setIsLoggedIn(true);
+          navigate('/location');
+        } catch (loginError) {
+          setMessage('Registration successful, but login failed. Please try logging in manually.');
+          console.error('Auto-login error:', loginError);
+        }
       }
     } catch (error) {
       handleError(error);
