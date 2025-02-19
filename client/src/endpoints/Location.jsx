@@ -1,145 +1,190 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/axios'
 import TrackLocation from '../components/TrackLocation';
 import TrackMovement from '../components/TrackMovement';
 import MapComponent from '../components/MapComponent';
+import PathColorUpdater from '../components/PathColorUpdater';
+import "../styling/Location.css";
 
 const LocationApp = () => {
-  const [locations, setLocations] = useState([]); // Store user's locations
-  const [newLocation, setNewLocation] = useState(null); // Track the newly added location
-  const [error, setError] = useState(null); // Track any errors
-  const [path, setPath] = useState([]); // Track the path for movements
+  const [locations, setLocations] = useState([]); // Initialize as an empty array
+  const [currentPosition, setCurrentPosition] = useState(null);
+  const [sessionPaths, setSessionPaths] = useState([]); // Initialize as an empty array
+  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [pathColor, setPathColor] = useState(null);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Dynamically determine the backend URL based on environment
-  const apiUrl = import.meta.env.MODE === 'production' 
-    ? import.meta.env.VITE_PROD_BACKEND_URL 
-    : import.meta.env.VITE_BACKEND_URL;
-
-  // Utility function to get the JWT token
-  const getToken = () => localStorage.getItem('token');
-
-  // Function to handle errors
   const handleError = (error) => {
-    if (error.response) {
-      if (error.response.status === 401) {
-        setError('Authentication failed. Please log in again.');
-      } else if (error.response.status === 500) {
-        setError('Server error occurred. Please try again later.');
-      } else {
-        setError(`Failed to load locations: ${error.response.data.message || 'Unknown error'}`);
-      }
-    } else if (error.request) {
-      setError('No response from server. Please check your internet connection.');
-    } else {
-      setError(`Unexpected error: ${error.message}`);
-    }
-    console.error('Error fetching locations:', error);
+    console.error('Error:', error);
+    setError(error?.message || 'An unexpected error occurred.');
   };
 
-  // Function to fetch saved locations
   const fetchLocations = async () => {
-    const token = getToken();
-    if (!token) {
-      setError('User not logged in. Please log in to see your locations.');
-      setLoading(false);
-      return;
-    }
-  
     try {
-      const locationResponse = await axios.get(`${apiUrl}/api/location`, {
-        headers: { 'x-auth-token': token },
-      });
-  
-      // Safely check if response data is an array
-      const locationsData = Array.isArray(locationResponse.data) ? locationResponse.data : [];
-      setLocations(locationsData);
-      setError(null); // Clear any previous errors if successful
+      const response = await api.get('/api/location');
+      setLocations(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       handleError(error);
     }
   };
 
-  // Function to fetch saved sessions and movements
   const fetchSessions = async () => {
-    const token = getToken();
-    if (!token) {
-      setError('User not logged in. Please log in to see your movements.');
-      setLoading(false);
-      return;
-    }
-
     try {
-      const response = await axios.get(`${apiUrl}/api/session`, {
-        headers: { 'x-auth-token': token },
-      });
+      setLoadingSessions(true);
 
-      // Safely check if response data is an array
+      // Fetch sessions with grouped movements
+      const response = await api.get('/api/session');
+
       const sessionsData = Array.isArray(response.data) ? response.data : [];
-      const pathCoordinates = sessionsData.flatMap(session =>
-        Array.isArray(session.movements) ? session.movements.map(movement => [movement.lat, movement.lng]) : []
-      );
-      setPath(pathCoordinates);
-      setError(null); // Clear any previous errors if successful
+      console.log('Fetched session data:', sessionsData);
+
+      // Map movements into session paths with colors
+      const paths = sessionsData.map((session) => ({
+        path: session.movements.map((movement) => [movement.lat, movement.lng]),
+        color: session.pathColor, // Fetch pathColor from session data
+      }));
+
+      console.log('Mapped session paths:', paths);
+      setSessionPaths(paths);
     } catch (error) {
       handleError(error);
+    } finally {
+      setLoadingSessions(false);
     }
   };
 
-  // Function to fetch both locations and sessions
+  const fetchPathColor = async () => {
+    try {
+      const response = await api.get('/api/users/profile'); // Adjusted endpoint
+      setPathColor(response.data.pathColor);
+    } catch (error) {
+      console.error('Error fetching path color:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPathColor();
+  }, []);
+
   const fetchLocationsAndSessions = async () => {
     setLoading(true);
-    await fetchLocations();
-    await fetchSessions();
+    await Promise.all([fetchLocations(), fetchSessions()]);
     setLoading(false);
   };
 
-  // Function to add a new location to the state
-  const addLocation = (newLocation) => {
-    const locationData = newLocation.location ? newLocation.location : newLocation;
-    if (!locationData._id) {
-      setError('Failed to add location: Missing location ID.');
-    } else {
-      // Check if the location already exists
-      if (!locations.some(loc => loc._id === locationData._id)) {
-        setLocations(prevLocations => [...prevLocations, locationData]);
-        setNewLocation(locationData);
-      }
-    }
-  };
-
-  // Fetch locations and sessions when the component mounts
   useEffect(() => {
     fetchLocationsAndSessions();
   }, []);
 
-  // Update locations dynamically when a new location is added
-  useEffect(() => {
-    if (newLocation) {
-      // Avoid duplicates
-      if (!locations.some(loc => loc._id === newLocation._id)) {
-        setLocations(prevLocations => [...prevLocations, newLocation]);
-      }
+  const addLocation = (newLocation) => {
+    if (!newLocation || !newLocation._id) {
+      handleError(new Error('Invalid location data.'));
+      return;
     }
-  }, [newLocation]);
+    setLocations((prev) => [...prev, newLocation]);
+  };
+
+  const handleDeleteLocation = async (index) => {
+    const locationId = locations[index]?._id;
+
+    if (!locationId) {
+      handleError(new Error('Invalid location ID.'));
+      return;
+    }
+
+    try {
+      await api.delete(`/api/location/${locationId}`);
+      setLocations((prev) => prev.filter((_, i) => i !== index));
+    } catch (error) {
+      handleError(error);
+    }
+  };
+
+  const handleDragMarker = async (event, index) => {
+    const newPosition = event.target.getLatLng();
+    const locationId = locations[index]?._id;
+
+    if (!locationId) {
+      handleError(new Error('Invalid location ID.'));
+      return;
+    }
+
+    try {
+      await api.put(`/api/location/${locationId}`, {
+        newLat: newPosition.lat,
+        newLng: newPosition.lng,
+      });
+
+      setLocations((prev) => {
+        const updated = [...prev];
+        updated[index] = { ...updated[index], lat: newPosition.lat, lng: newPosition.lng };
+        return updated;
+      });
+    } catch (error) {
+      handleError(error);
+    }
+  };
 
   return (
-    <div>
-      <h1>Track My Location</h1>
+    <div className="location-app">
+      {loading && <div className="loading-spinner">Loading...</div>} {/* Display loading spinner */}
 
-      {/* Pass the addLocation function to TrackLocation so it can update the map */}
+      {pathColor && (
+        <PathColorUpdater
+          currentColor={pathColor}
+          onColorUpdate={(newColor) => {
+            setPathColor(newColor); // Update the local state
+            // Optionally refresh the session paths with the new color
+            setSessionPaths((prevPaths) =>
+              prevPaths.map((session) => ({
+                ...session,
+                color: newColor, // Update all sessions with the new color
+              }))
+            );
+          }}
+        />
+      )}
+
+      <div className="controls">
       <TrackLocation addLocation={addLocation} />
+        <TrackMovement
+          updateMap={({ currentPosition: pos, path }) => {
+            console.log('Path received in LocationApp:', path); // Debugging log
+            setCurrentPosition(pos);
+            setSessionPaths((prevPaths) => {
+              const updatedPaths = [...prevPaths];
+              const lastPath = updatedPaths[updatedPaths.length - 1];
 
-      <TrackMovement addLocation={addLocation} />
+              // Ensure path color persists for the current session
+              if (lastPath) {
+                updatedPaths[updatedPaths.length - 1] = {
+                  ...lastPath,
+                  path,
+                  color: pathColor, // Ensure path color persists for the current session
+                };
+              }
 
-      {/* Display loading indicator */}
-      {loading && <p>Loading map data...</p>}
+              console.log('Updated sessionPaths in LocationApp:', updatedPaths); // Debugging log
+              return updatedPaths;
+            });
+          }}
+        />
+      </div>
 
-      {/* Display any error messages */}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <div className="alert-danger">{error}</div>}
 
-      {/* Pass the locations and path to MapComponent to display them */}
-      <MapComponent locations={locations} newLocation={newLocation} path={path} />
+      {!loading && (
+        <div className="map-wrapper">
+          <MapComponent
+            currentPosition={currentPosition}
+            sessionPaths={sessionPaths || []} // Ensure array
+            savedLocations={locations || []} // Ensure array
+            onDeleteLocation={handleDeleteLocation} // Pass delete handler
+            onDragMarker={handleDragMarker} // Pass drag handler
+          />
+        </div>
+      )}
     </div>
   );
 };

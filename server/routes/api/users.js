@@ -1,10 +1,9 @@
-// routes/api/users.js
 const express = require('express');
+const { getUserProfile } = require('../../controllers/userController'); // Controller to handle the logic
+const auth = require('../../utils/auth'); // Middleware to authenticate requests
 const router = express.Router();
 
-// Example user-related routes
-router.get('/profile', (req, res) => {
-  res.json({ message: 'User profile route' });
-});
+// Route to fetch the logged-in user's profile
+router.get('/profile', auth, getUserProfile);
 
 module.exports = router;

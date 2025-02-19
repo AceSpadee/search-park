@@ -1,12 +1,13 @@
 import React from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import App from './App';        // Main App component
 import HomePage from './endpoints/HomePage';  // HomePage endpoints
-import DrawingMap from './components/DrawingMap';  // DrawingMap component
 import ErrorPage from './endpoints/ErrorPage';  // Optional: Error page component
 import Login from './endpoints/Login';
 import Register from './endpoints/Register';
 import LocationApp from './endpoints/Location';
+import GroupMap from './endpoints/GroupMap';
+import Mapbox3DMap from './components/Mapbox3DMap';
 
 // Create the router using React Router v6
 const router = createBrowserRouter([
@@ -20,10 +21,6 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: 'map',             // Path for the drawing/map component
-        element: <DrawingMap />,
-      },
-      {
         path: 'login',
         element: <Login />,
       },
@@ -34,6 +31,14 @@ const router = createBrowserRouter([
       {
         path: 'location',
         element: <LocationApp />,
+      },
+      {
+        path: 'groupmap',
+        element: <GroupMap />,
+      },
+      {
+        path: 'othermap',
+        element: <Mapbox3DMap />,
       },
     ],
   },

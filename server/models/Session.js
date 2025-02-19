@@ -60,6 +60,10 @@ const sessionSchema = new Schema({
     type: String,
   },
   movements: [movementSchema],
+  pathColor: {
+    type: String,
+    required: true,
+  },
 }, { versionKey: false });
 
 // Pre-save hook to format startTime and endTime
