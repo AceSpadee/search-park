@@ -1,28 +1,33 @@
 const jwt = require('jsonwebtoken');
 
-// Middleware function to verify the JWT token in incoming requests
+// Middleware function to verify the JWT access token
 const auth = (req, res, next) => {
-  const token = req.header('x-auth-token');
+  console.log('Headers:', req.headers);
+
+  // Extract token from Authorization header or x-auth-token
+  let token = req.headers['authorization']?.split(' ')[1]; // Extract from "Authorization: Bearer <token>"
+  if (!token) {
+    token = req.headers['x-auth-token']; // Fallback to x-auth-token
+  }
+
+  console.log('Extracted token:', token); // Log the token
 
   if (!token) {
     return res.status(401).json({ msg: 'No token, authorization denied' });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);  // Decode the token
-    console.log('Decoded payload:', decoded);  // Log the decoded payload to inspect it
-    
-    if (!decoded.user || !decoded.user.id) {
-      return res.status(401).json({ msg: 'Token is invalid, no user ID present' });
-    }
-
-    req.user = decoded.user;  // Attach the decoded user object to req.user
-    next();  // Move to the next middleware or route handler
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Verify the token
+    console.log('Decoded token:', decoded); // Log the decoded token
+    req.user = decoded.user; // Attach user info to request
+    next();
   } catch (err) {
-    console.error('Token verification failed:', err);
+    console.error('Token verification failed:', err.message);
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ msg: 'Token expired. Please refresh your session.' });
+    }
     res.status(401).json({ msg: 'Token is not valid' });
   }
 };
 
-// Export the middleware function so it can be used in routes that require authentication
 module.exports = auth;

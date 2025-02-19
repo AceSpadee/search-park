@@ -1,0 +1,16 @@
+.app {
+  --background-gradient: linear-gradient(to bottom right, #301126, #060409);
+  --title-color: #579cff;
+  --border-color: #8c2466;
+
+  background: var(--background-gradient);
+  color: var(--title-color);
+  height: 100vh;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.app .container {
+  border: 2px solid var(--border-color);
+}

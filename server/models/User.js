@@ -1,47 +1,54 @@
-const { Schema, model } = require('mongoose');
+const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
-const userSchema = new Schema({
-    firstName: {
-        type: String,
-        required: [true, 'First name is required'],
-    },
-    lastName: {
-        type: String,
-        required: [true, 'Last name is required'],
-    },
-    userName: {
-        type: String,
-        required: [true, 'User name is required'],
-        unique: true,
-    },
-    password: {
-        type: String,
-        required: true,
-        minlength: [4, 'Password must be at least 4 characters'],
-    },
-    locations: [{
-      lat: Number,
-      lng: Number,
-      timestamp: { 
-        type: Date,
-        default: Date.now,
-      },
-      notes: {
-        type: String,
-        required: false,
-      },
-    }]
-});
+// Main User Schema
+const userSchema = new mongoose.Schema({
+  firstName: {
+    type: String,
+    required: true,
+  },
+  lastName: {
+    type: String,
+    required: true,
+  },
+  userName: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  locations: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Location', // Reference to the Location model
+    }
+  ],
+  sessions: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Session', // Reference to the Session model
+    }
+  ],
+  pathColor: {
+    type: String,
+    unique: true, // Ensure each user has a unique color
+  },
+  // Add refreshToken field
+  refreshToken: {
+    type: String,
+    default: null, // Set to null initially, updated during login
+  },
+}, { versionKey: false });
 
-
-// Set up pre-save middleware to create password
+// Pre-save hook to hash the password before saving
 userSchema.pre('save', async function (next) {
   if (this.isModified('password') || this.isNew) {
     try {
       const saltRounds = 10;
       this.password = await bcrypt.hash(this.password, saltRounds);
-      console.log('Hashed password in pre-save hook:', this.password);  // Log the hashed password
       next();
     } catch (err) {
       return next(err);
@@ -50,12 +57,11 @@ userSchema.pre('save', async function (next) {
     next();
   }
 });
-  
-  // Compare the incoming password with the hashed password
-  userSchema.methods.isCorrectPassword = async function (password) {
-    return bcrypt.compare(password, this.password);
-  };
 
-const User = model('User', userSchema);
+// Virtual property to combine firstName and lastName
+userSchema.virtual('fullName').get(function () {
+  return `${this.firstName} ${this.lastName}`;
+});
 
+const User = mongoose.model('User', userSchema);
 module.exports = User;

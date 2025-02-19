@@ -1,119 +1,124 @@
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import "../styling/MapComponent.css";
+import L from 'leaflet';
 
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import markerIconRed from '../assets/red-icon.png';
+import markerShadow from '../assets/marker-shadow.png';
 
-
-// Fix the broken marker icon issue
-let DefaultIcon = L.icon({
-  iconUrl: markerIcon,
+const RedIcon = L.icon({
+  iconUrl: markerIconRed,
   shadowUrl: markerShadow,
-  iconSize: [25, 41], // Size of the icon
-  iconAnchor: [12, 41], // Point of the icon which will correspond to marker's location
-  popupAnchor: [1, -34], // Point from which the popup should open relative to the iconAnchor
-  shadowSize: [41, 41], // Size of the shadow
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
 });
 
-L.Marker.prototype.options.icon = DefaultIcon;
+const CurrentPositionIcon = L.icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+  iconSize: [30, 45],
+  iconAnchor: [15, 45],
+  popupAnchor: [1, -34],
+  shadowSize: [45, 45],
+});
 
-const MapComponent = () => {
-  const [markers, setMarkers] = useState([]);  // Initialize markers as an empty array
-  const [error, setError] = useState(null);  // State to track errors
+const MapComponent = ({
+  currentPosition,
+  sessionPaths = [], // Session paths for individual user
+  savedLocations = [], // Saved locations for individual user
+  allSessionPaths = [], // New prop for group map paths with colors
+  onDeleteLocation,
+  onDragMarker,
+}) => {
 
-  // Dynamically determine the backend URL based on environment
-  const isProduction = import.meta.env.MODE === 'production';
-  const apiUrl = isProduction 
-    ? import.meta.env.VITE_PROD_BACKEND_URL 
-    : import.meta.env.VITE_BACKEND_URL;
-
+  console.log('Session paths passed to MapComponent:', sessionPaths);
+  console.log('Group session paths passed to MapComponent:', allSessionPaths);
   
-  // Fetch locations from the backend when the component loads
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const token = localStorage.getItem('token');  // Get JWT token from localStorage
-        if (!token) {
-          setError('User not logged in. Please log in to view locations.');
-          return;
-        }
-
-        // Make a GET request to fetch the user's saved locations
-        const response = await axios.get(`${apiUrl}/api/location`, {
-          headers: {
-            'x-auth-token': token,  // Send the JWT token in the request header
-          },
-        });
-
-        setMarkers(response.data);  // Set the fetched locations as markers
-      } catch (error) {
-        // Handle specific Axios errors
-        if (error.response) {
-          if (error.response.status === 401) {
-            setError('Authentication failed. Please log in again.');
-          } else if (error.response.status === 500) {
-            setError('Server error occurred. Please try again later.');
-          } else {
-            setError(`Failed to fetch locations: ${error.response.data.message || 'Unknown error'}`);
-          }
-        } else if (error.request) {
-          setError('No response from server. Please check your internet connection.');
-        } else {
-          setError(`Unexpected error: ${error.message}`);
-        }
-        console.error('Error fetching locations:', error);
-      }
-    };
-
-    fetchLocations();  // Fetch locations on component mount
-  }, [apiUrl]);
-
-  // Handle the drag end event to update the marker's position
-  const handleMarkerDragEnd = (event, index) => {
-    const newPosition = event.target.getLatLng();  // Get new marker position
-    const updatedMarkers = [...markers];  // Create a copy of the markers
-    updatedMarkers[index] = { ...updatedMarkers[index], lat: newPosition.lat, lng: newPosition.lng };  // Update the marker's lat/lng
-    setMarkers(updatedMarkers);  // Update the state with the new marker position
-    console.log(`Marker ${index} moved to: `, newPosition);  // Log new position
-  };
-
   return (
-    <div>
-      {error && <p style={{ color: 'red' }}>{error}</p>}  {/* Display error message if exists */}
-      
-      <MapContainer center={[45.6280, -122.6739]} zoom={12} style={{ height: '400px', width: '100%' }}>
-        {/* Esri Satellite Imagery as the base layer */}
-        <TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          attribution="Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA"
-        />
-
-        {/* OpenStreetMap roads and labels as a semi-transparent overlay */}
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors" 
-          opacity={0.4}
-        />
-
-        {/* Render the markers fetched from the backend */}
-        {markers.map((location, index) => (
-          <Marker
-            key={index}
-            position={[location.lat, location.lng]}
-            draggable={true}  // Enable marker dragging
-            eventHandlers={{
-              dragend: (event) => handleMarkerDragEnd(event, index),  // Handle drag end event
-            }}
+    <div className="map-container">
+      <div className="card">
+        <div className="card-header">
+          <h5>Locations</h5>
+        </div>
+        <div className="card-body">
+          <MapContainer
+            center={[45.628, -122.6739]}
+            zoom={12}
+            style={{ height: '650px', width: '100%' }}
+            preferCanvas={true}
           >
-            <Popup>
-              <h4>Location Note</h4>
-              <p>{location.notes || 'No notes for this location'}</p>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              attribution="Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA"
+            />
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="&copy; OpenStreetMap contributors"
+              opacity={0.4}
+            />
+
+            {/* Render saved locations */}
+            {Array.isArray(savedLocations) && savedLocations.map((location, index) => (
+              <Marker
+                key={location._id}
+                position={[location.lat, location.lng]}
+                icon={RedIcon}
+                draggable={true}
+                eventHandlers={{
+                  dragend: (event) => onDragMarker(event, index),
+                }}
+              >
+                <Popup>
+                  {location.notes || 'No notes for this location'}
+                  <br />
+                  <button
+                    className="btn btn-danger btn-sm mt-2"
+                    onClick={() => onDeleteLocation(index)}
+                  >
+                    Delete Marker
+                  </button>
+                </Popup>
+              </Marker>
+            ))}
+
+            {/* Render user's current position */}
+            {currentPosition && (
+              <Marker position={currentPosition} icon={CurrentPositionIcon}>
+                <Popup>
+                  Current Position: Lat {currentPosition[0]}, Lng {currentPosition[1]}
+                </Popup>
+              </Marker>
+            )}
+
+            {/* Render polylines for session paths */}
+            {Array.isArray(sessionPaths) && sessionPaths.map((sessionPath, index) => (
+              sessionPath?.path?.length > 0 && ( // Ensure `sessionPath.path` exists and has elements
+                <Polyline
+                  key={`session-${index}`}
+                  positions={sessionPath.path} // Safely access path
+                  color={sessionPath.color}
+                />
+              )
+            ))}
+
+            {/* Render polylines for group session paths */}
+            {Array.isArray(allSessionPaths) &&
+            allSessionPaths.map((session, index) => (
+              session?.path?.length > 0 && (
+                <Polyline
+                  key={`group-session-${index}`}
+                  positions={session.path} // Correctly use the path from movements
+                  color={session.color} // User’s unique color
+                  weight={4} // Adjust line thickness if needed
+                  opacity={0.8} // Optional: Adjust opacity
+                />
+              )
+            ))}
+          </MapContainer>
+        </div>
+      </div>
     </div>
   );
 };

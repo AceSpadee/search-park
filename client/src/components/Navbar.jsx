@@ -1,35 +1,38 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import '../styling/Navbar.css';
+import Logout from './Logout';
 
-const Navbar = () => {
+const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
+  const handleLogout = () => {
+    // Clear session data
+    localStorage.removeItem('accessToken');
+    setIsLoggedIn(false); // Update state
+  };
+
   return (
-
-<nav className="navbar">
-  <div className="navbar-left">
-    <ul className="nav-links">
-      <li>
-        <a href="/map">Map</a>
-      </li>
-      <li>
-        <a href="/login">Login</a>
-      </li>
-      <li>
-        <a href="/register">Register</a>
-      </li>
-    </ul>
-  </div>
-  <div className="navbar-center">
-    <a href="/location" className="logo">
-      locations
-    </a>
-  </div>
-  <div className="navbar-right">
-    <a href="/" className="home-button">
-      Home
-    </a>
-  </div>
-</nav>
-);
+    <nav className="navbar">
+      <div className="nav-section">
+        <Link to="/" className="nav-button home-btn">Home</Link>
+      </div>
+      <div className="nav-section logo">
+        <Link to="/location" className="nav-button">Locations</Link>
+        {isLoggedIn && (
+          <Link to="/groupmap" className="nav-button">Group Map</Link>
+        )}
+      </div>
+      <div className="nav-section nav-links">
+        {!isLoggedIn ? (
+          <>
+            <Link to="/login" className="nav-button">Login</Link>
+            <Link to="/register" className="nav-button register-btn">Register</Link>
+          </>
+        ) : (
+          <Logout handleLogout={handleLogout} className="nav-button logout-button" />
+        )}
+      </div>
+    </nav>
+  );
 };
 
 export default Navbar;

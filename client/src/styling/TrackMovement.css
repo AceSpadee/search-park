@@ -1,0 +1,90 @@
+:root {
+  --container-color: #0d0c15;
+  --text-color: #1e3a58;
+  --border-color: #751a65;
+  --background-color: #4b143b;
+  --hover-gradient-start: linear-gradient(to bottom right, #2a042a, #0fd93e9b);
+  --hover-gradient-stop: linear-gradient(to bottom right, #2a042a, #dc3546a8);
+  --start-color: #0fd93e;
+  --stop-color: #dc3545;
+  --hover-start: #0fd93ed3;
+  --hover-stop: #dc3546d2;
+}
+
+
+.track-movement-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 20px auto 0;
+  max-width: 500px;
+  width: 90%;
+  background-color: var(--container-color);
+  border: 2px solid var(--border-color);
+  color: var(--text-color);
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.track-movement-container button {
+  padding: 12px 20px;
+  font-size: 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, border 0.3s, transform 0.2s;
+  flex: 1;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+.track-movement-container .start-button {
+  background-color: var(--start-color);
+  color: var(--container-color);
+}
+
+.track-movement-container .stop-button {
+  background-color: var(--stop-color);
+  color: var(--container-color);
+}
+
+.track-movement-container .start-button:hover {
+  background: var(--hover-gradient-start);
+  border-color: var(--start-color);
+  color: var(--hover-start);
+  transform: scale(1.05);
+}
+
+.track-movement-container .stop-button:hover {
+  background: var(--hover-gradient-stop);
+  border-color: var(--stop-color);
+  color: var(--hover-stop);
+  transform: scale(1.05);
+}
+
+.track-movement-container button:disabled {
+  background-color: #ffffff93;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .track-movement-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+}
+
+.error {
+  color: red;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.current-position,
+.tracking-duration {
+  margin-top: 10px;
+  color: var(--text-color);
+} 
